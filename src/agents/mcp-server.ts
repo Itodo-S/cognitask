@@ -282,4 +282,72 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
       };
     },
   },
+
+  get_by_priority: {
+    schema: z.object({ priority: z.enum(["low", "medium", "high", "urgent"]) }),
+    handler: async (args) => {
+      const parsed = z.object({ priority: z.enum(["low", "medium", "high", "urgent"]) }).parse(args);
+      const { todos, total } = await todoService.findMany({ priority: parsed.priority, limit: 50 });
+      return {
+        content: [{ type: "text", text: JSON.stringify({ priority: parsed.priority, total, todos }) }],
+      };
+    },
+  },
+
+  get_by_category: {
+    schema: z.object({ category: z.string() }),
+    handler: async (args) => {
+      const parsed = z.object({ category: z.string() }).parse(args);
+      const { todos, total } = await todoService.findMany({ category: parsed.category as any, limit: 50 });
+      return {
+        content: [{ type: "text", text: JSON.stringify({ category: parsed.category, total, todos }) }],
+      };
+    },
+  },
+
+  duplicate_todo: {
+    schema: z.object({ id: z.string(), titleSuffix: z.string().optional().default(" (copy)") }),
+    handler: async (args) => {
+      const parsed = z.object({ id: z.string(), titleSuffix: z.string().optional().default(" (copy)") }).parse(args);
+      const original = await todoService.findById(parsed.id);
+      if (!original) {
+        return { content: [{ type: "text", text: JSON.stringify({ error: "Todo not found" }) }] };
+      }
+      const duplicate = await todoService.create({
+        title: `${original.title}${parsed.titleSuffix}`,
+        description: original.description ?? undefined,
+        priority: original.priority,
+        category: original.category as any,
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify(duplicate, null, 2) }],
+      };
+    },
+  },
+
+  get_subtasks: {
+    schema: z.object({ parentId: z.string() }),
+    handler: async (args) => {
+      const parsed = z.object({ parentId: z.string() }).parse(args);
+      const subtasks = await todoService.findSubtasks(parsed.parentId);
+      return {
+        content: [{ type: "text", text: JSON.stringify({ parentId: parsed.parentId, subtasks, count: subtasks.length }) }],
+      };
+    },
+  },
+
+  bulk_update_priority: {
+    schema: z.object({ ids: z.array(z.string()).min(1), priority: z.enum(["low", "medium", "high", "urgent"]) }),
+    handler: async (args) => {
+      const parsed = z.object({ ids: z.array(z.string()).min(1), priority: z.enum(["low", "medium", "high", "urgent"]) }).parse(args);
+      const results = [];
+      for (const id of parsed.ids) {
+        const todo = await todoService.update(id, { priority: parsed.priority });
+        if (todo) results.push(todo);
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify({ updated: results.length, priority: parsed.priority }) }],
+      };
+    },
+  },
 };
