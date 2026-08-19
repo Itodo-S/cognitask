@@ -4,7 +4,23 @@ import sensible from "@fastify/sensible";
 import { env } from "./config/env.js";
 import { errorHandler } from "./api/middleware/errorHandler.js";
 import { setupRateLimiter } from "./api/middleware/rateLimiter.js";
-import { todoRoutes, aiRoutes, sessionRoutes, statsRoutes } from "./api/routes/index.js";
+import { requestLogger } from "./api/middleware/requestLogger.js";
+import { requestId } from "./api/middleware/requestId.js";
+import { securityHeaders } from "./api/middleware/security.js";
+import {
+  todoRoutes,
+  aiRoutes,
+  sessionRoutes,
+  statsRoutes,
+  tagRoutes,
+  sseRoutes,
+  bulkRoutes,
+} from "./api/routes/index.js";
+import { preferencesRoutes } from "./api/routes/preferences.routes.js";
+import { analyticsRoutes } from "./api/routes/analytics.routes.js";
+import { templateRoutes } from "./api/routes/template.routes.js";
+import { dependencyRoutes } from "./api/routes/dependency.routes.js";
+import { healthRoutes } from "./api/routes/health.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -12,12 +28,19 @@ const app = Fastify({
   logger: {
     level: env.NODE_ENV === "development" ? "info" : "warn",
   },
+  requestTimeout: 30000,
+  bodyLimit: 1048576,
 });
 
 // ── Plugins ───────────────────────────────────────────────────
 await app.register(cors, { origin: env.CORS_ORIGIN });
 await app.register(sensible);
 await app.register(setupRateLimiter);
+
+// ── Middleware ─────────────────────────────────────────────────
+await app.register(requestId);
+await app.register(requestLogger);
+await app.register(securityHeaders);
 
 // ── WebSocket ─────────────────────────────────────────────────
 await app.register(wsRoutes);
@@ -27,14 +50,14 @@ await app.register(todoRoutes);
 await app.register(aiRoutes);
 await app.register(sessionRoutes);
 await app.register(statsRoutes);
-
-// ── Root ──────────────────────────────────────────────────────
-app.get("/api/health", async () => ({
-  status: "ok",
-  name: "CogniTask",
-  version: "0.1.0",
-  timestamp: new Date().toISOString(),
-}));
+await app.register(tagRoutes);
+await app.register(sseRoutes);
+await app.register(bulkRoutes);
+await app.register(preferencesRoutes);
+await app.register(analyticsRoutes);
+await app.register(templateRoutes);
+await app.register(dependencyRoutes);
+await app.register(healthRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
@@ -45,6 +68,7 @@ async function start() {
     await app.listen({ port: env.PORT, host: env.HOST });
     logger.info(`CogniTask running on http://${env.HOST}:${env.PORT}`);
     logger.info(`WebSocket available at ws://${env.HOST}:${env.PORT}/ws`);
+    logger.info(`API docs at http://${env.HOST}:${env.PORT}/api/health`);
   } catch (err) {
     logger.error("Failed to start server", { error: String(err) });
     process.exit(1);
