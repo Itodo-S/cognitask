@@ -48,6 +48,8 @@ import { journalRoutes } from "./api/routes/journal.routes.js";
 import { focusSessionRoutes } from "./api/routes/focus-session.routes.js";
 import { aiRoutes_v2 } from "./api/routes/ai-v2.routes.js";
 import { changelogRoutes } from "./api/routes/changelog.routes.js";
+import { statsV2Routes } from "./api/routes/stats-v2.routes.js";
+import { metaRoutes } from "./api/routes/meta.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -112,6 +114,8 @@ await app.register(journalRoutes);
 await app.register(focusSessionRoutes);
 await app.register(aiRoutes_v2);
 await app.register(changelogRoutes);
+await app.register(statsV2Routes);
+await app.register(metaRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
