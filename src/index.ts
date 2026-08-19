@@ -56,6 +56,8 @@ import { batchRoutes_v2 } from "./api/routes/batch-v2.routes.js";
 import { savedViewsRoutes } from "./api/routes/saved-views.routes.js";
 import { archiveRoutes } from "./api/routes/archive.routes.js";
 import { shortcutRoutes } from "./api/routes/shortcut.routes.js";
+import { dailyDigestRoutes } from "./api/routes/daily-digest.routes.js";
+import { onboardingRoutes } from "./api/routes/onboarding.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -128,6 +130,8 @@ await app.register(batchRoutes_v2);
 await app.register(savedViewsRoutes);
 await app.register(archiveRoutes);
 await app.register(shortcutRoutes);
+await app.register(dailyDigestRoutes);
+await app.register(onboardingRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
