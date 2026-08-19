@@ -30,6 +30,7 @@ import { projectRoutes } from "./api/routes/project.routes.js";
 import { duplicateRoutes } from "./api/routes/duplicate.routes.js";
 import { searchRoutes } from "./api/routes/search.routes.js";
 import { reportRoutes } from "./api/routes/report.routes.js";
+import { insightsRoutes } from "./api/routes/insights.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -76,6 +77,7 @@ await app.register(projectRoutes);
 await app.register(duplicateRoutes);
 await app.register(searchRoutes);
 await app.register(reportRoutes);
+await app.register(insightsRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
