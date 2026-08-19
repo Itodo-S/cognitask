@@ -31,6 +31,8 @@ import { duplicateRoutes } from "./api/routes/duplicate.routes.js";
 import { searchRoutes } from "./api/routes/search.routes.js";
 import { reportRoutes } from "./api/routes/report.routes.js";
 import { insightsRoutes } from "./api/routes/insights.routes.js";
+import { exportRoutes } from "./api/routes/export.routes.js";
+import { reminderRoutes } from "./api/routes/reminder.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -78,6 +80,8 @@ await app.register(duplicateRoutes);
 await app.register(searchRoutes);
 await app.register(reportRoutes);
 await app.register(insightsRoutes);
+await app.register(exportRoutes);
+await app.register(reminderRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
