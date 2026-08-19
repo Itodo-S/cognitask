@@ -32,3 +32,13 @@ export {
   productivityScoreSchema,
   type CompletionTrendsInput,
 } from "./analysis-tools.schema.js";
+
+export {
+  quickAddToolSchema,
+  focusModeSchema,
+  dailySummarySchema,
+  smartSortSchema,
+  type QuickAddToolInput,
+  type FocusModeInput,
+  type SmartSortInput,
+} from "./smart-tools.schema.js";
