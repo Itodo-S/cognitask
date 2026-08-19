@@ -46,6 +46,8 @@ import { timeTrackingRoutes } from "./api/routes/time-tracking.routes.js";
 import { knowledgeBaseRoutes } from "./api/routes/knowledge.routes.js";
 import { journalRoutes } from "./api/routes/journal.routes.js";
 import { focusSessionRoutes } from "./api/routes/focus-session.routes.js";
+import { aiRoutes_v2 } from "./api/routes/ai-v2.routes.js";
+import { changelogRoutes } from "./api/routes/changelog.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -108,6 +110,8 @@ await app.register(timeTrackingRoutes);
 await app.register(knowledgeBaseRoutes);
 await app.register(journalRoutes);
 await app.register(focusSessionRoutes);
+await app.register(aiRoutes_v2);
+await app.register(changelogRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
