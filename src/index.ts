@@ -21,6 +21,11 @@ import { analyticsRoutes } from "./api/routes/analytics.routes.js";
 import { templateRoutes } from "./api/routes/template.routes.js";
 import { dependencyRoutes } from "./api/routes/dependency.routes.js";
 import { healthRoutes } from "./api/routes/health.routes.js";
+import { apiInfoRoutes } from "./api/routes/api-info.routes.js";
+import { smartRoutes } from "./api/routes/smart.routes.js";
+import { activityRoutes } from "./api/routes/activity.routes.js";
+import { focusRoutes } from "./api/routes/focus.routes.js";
+import { calendarRoutes } from "./api/routes/calendar.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -58,6 +63,11 @@ await app.register(analyticsRoutes);
 await app.register(templateRoutes);
 await app.register(dependencyRoutes);
 await app.register(healthRoutes);
+await app.register(apiInfoRoutes);
+await app.register(smartRoutes);
+await app.register(activityRoutes);
+await app.register(focusRoutes);
+await app.register(calendarRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
