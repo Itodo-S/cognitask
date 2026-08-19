@@ -54,6 +54,8 @@ import { tagCloudRoutes } from "./api/routes/tag-cloud.routes.js";
 import { milestoneRoutes } from "./api/routes/milestone.routes.js";
 import { batchRoutes_v2 } from "./api/routes/batch-v2.routes.js";
 import { savedViewsRoutes } from "./api/routes/saved-views.routes.js";
+import { archiveRoutes } from "./api/routes/archive.routes.js";
+import { shortcutRoutes } from "./api/routes/shortcut.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -124,6 +126,8 @@ await app.register(tagCloudRoutes);
 await app.register(milestoneRoutes);
 await app.register(batchRoutes_v2);
 await app.register(savedViewsRoutes);
+await app.register(archiveRoutes);
+await app.register(shortcutRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
