@@ -38,6 +38,7 @@ import { queueRoutes } from "./api/routes/queue.routes.js";
 import { dashboardRoutes } from "./api/routes/dashboard.routes.js";
 import { quickActionsRoutes } from "./api/routes/quick-actions.routes.js";
 import { automationRoutes } from "./api/routes/automation.routes.js";
+import { goalRoutes } from "./api/routes/goal.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -92,6 +93,7 @@ await app.register(queueRoutes);
 await app.register(dashboardRoutes);
 await app.register(quickActionsRoutes);
 await app.register(automationRoutes);
+await app.register(goalRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
