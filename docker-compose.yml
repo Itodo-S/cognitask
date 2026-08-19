@@ -1,0 +1,23 @@
+services:
+  cognitask:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/cognitask.db
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - CORS_ORIGIN=*
+      - RATE_LIMIT_MAX=200
+      - RATE_LIMIT_WINDOW=60000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
