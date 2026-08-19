@@ -52,6 +52,8 @@ import { statsV2Routes } from "./api/routes/stats-v2.routes.js";
 import { metaRoutes } from "./api/routes/meta.routes.js";
 import { tagCloudRoutes } from "./api/routes/tag-cloud.routes.js";
 import { milestoneRoutes } from "./api/routes/milestone.routes.js";
+import { batchRoutes_v2 } from "./api/routes/batch-v2.routes.js";
+import { savedViewsRoutes } from "./api/routes/saved-views.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -120,6 +122,8 @@ await app.register(statsV2Routes);
 await app.register(metaRoutes);
 await app.register(tagCloudRoutes);
 await app.register(milestoneRoutes);
+await app.register(batchRoutes_v2);
+await app.register(savedViewsRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
