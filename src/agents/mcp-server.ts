@@ -211,4 +211,75 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
       };
     },
   },
+
+  bulk_complete: {
+    schema: z.object({ ids: z.array(z.string()).min(1) }),
+    handler: async (args) => {
+      const parsed = z.object({ ids: z.array(z.string()).min(1) }).parse(args);
+      const results = [];
+      for (const id of parsed.ids) {
+        const todo = await todoService.updateStatus(id, "completed");
+        if (todo) results.push(todo);
+      }
+      return {
+        content: [{ type: "text", text: JSON.stringify({ completed: results.length, todos: results }) }],
+      };
+    },
+  },
+
+  get_overdue: {
+    schema: z.object({}),
+    handler: async () => {
+      const now = new Date().toISOString();
+      const { todos } = await todoService.findMany({ limit: 100 });
+      const overdue = todos.filter(
+        (t) => t.status !== "completed" && t.status !== "archived" && t.dueDate && t.dueDate < now
+      );
+      return {
+        content: [{ type: "text", text: JSON.stringify({ overdue, count: overdue.length }) }],
+      };
+    },
+  },
+
+  get_upcoming: {
+    schema: z.object({ days: z.number().min(1).max(30).optional().default(7) }),
+    handler: async (args) => {
+      const parsed = z.object({ days: z.number().min(1).max(30).optional().default(7) }).parse(args);
+      const now = new Date();
+      const future = new Date(now.getTime() + parsed.days * 86400000).toISOString();
+      const { todos } = await todoService.findMany({ limit: 100 });
+      const upcoming = todos.filter(
+        (t) =>
+          t.status !== "completed" &&
+          t.status !== "archived" &&
+          t.dueDate &&
+          t.dueDate > now.toISOString() &&
+          t.dueDate < future
+      );
+      return {
+        content: [{ type: "text", text: JSON.stringify({ upcoming, count: upcoming.length, days: parsed.days }) }],
+      };
+    },
+  },
+
+  count_by_status: {
+    schema: z.object({}),
+    handler: async () => {
+      const stats = await todoService.getStats();
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({
+              pending: stats.pending,
+              inProgress: stats.inProgress,
+              completed: stats.completed,
+              archived: stats.archived,
+              total: stats.total,
+            }),
+          },
+        ],
+      };
+    },
+  },
 };
