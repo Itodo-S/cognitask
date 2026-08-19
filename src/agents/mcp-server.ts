@@ -13,6 +13,8 @@ import {
   decomposeGoalToolSchema,
   analyzeProductivityToolSchema,
 } from "./tools/planning-tools.schema.js";
+import { quickAddToolSchema } from "./tools/smart-tools.schema.js";
+import { todoService } from "../../services/todo.service.js";
 
 /**
  * Tool handler function type.
@@ -174,6 +176,38 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
       const dashboard = await statsService.getDashboard();
       return {
         content: [{ type: "text", text: JSON.stringify(dashboard, null, 2) }],
+      };
+    },
+  },
+
+  quick_add: {
+    schema: quickAddToolSchema,
+    handler: async (args) => {
+      const parsed = quickAddToolSchema.parse(args);
+      const todo = await todoService.create({ title: parsed.text });
+      return {
+        content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
+      };
+    },
+  },
+
+  get_todo_tree: {
+    schema: z.object({}),
+    handler: async () => {
+      const tree = await todoService.getTree();
+      return {
+        content: [{ type: "text", text: JSON.stringify(tree, null, 2) }],
+      };
+    },
+  },
+
+  archive_todo: {
+    schema: z.object({ id: z.string() }),
+    handler: async (args) => {
+      const parsed = z.object({ id: z.string() }).parse(args);
+      const result = await todoService.delete(parsed.id);
+      return {
+        content: [{ type: "text", text: JSON.stringify({ archived: result }) }],
       };
     },
   },
