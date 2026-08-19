@@ -5,18 +5,17 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "node --import tsx/esm src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
-    "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push",
-    "db:seed": "tsx src/db/seed.ts",
-    "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "node --import tsx/esm src/db/seed.ts"
   },
   "keywords": [
     "ai",
@@ -35,9 +34,17 @@
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/sensible": "^6.0.5",
     "@fastify/websocket": "^11.3.0",
-    "@prisma/client": "^7.9.1",
     "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.44.0",
     "fastify": "^5.12.1",
+    "better-sqlite3": "^11.9.0",
     "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
   }
 }
