@@ -1,0 +1,180 @@
+import { z } from "zod";
+import { todoService } from "../../services/todo.service.js";
+import { statsService } from "../../services/stats.service.js";
+import {
+  listTodosToolSchema,
+  createTodoToolSchema,
+  updateTodoToolSchema,
+  completeTodoToolSchema,
+  addSubtaskToolSchema,
+  searchTodosToolSchema,
+} from "./tools/todo-tools.schema.js";
+import {
+  decomposeGoalToolSchema,
+  analyzeProductivityToolSchema,
+} from "./tools/planning-tools.schema.js";
+
+/**
+ * Tool handler function type.
+ * When the Claude Agent SDK is integrated, each handler maps to an MCP tool via tool().
+ */
+type ToolHandler = (args: Record<string, unknown>) => Promise<{
+  content: Array<{ type: string; text: string }>;
+}>;
+
+/**
+ * Register all custom MCP tools.
+ *
+ * ──────────────────────────────────────────────────────────────────────
+ *  WHEN YOU ADD THE CLAUDE AGENT SDK:
+ *
+ *  1. Import:  import { tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
+ *  2. Convert each handler below to use tool() + Zod schema:
+ *
+ *     const myTool = tool(
+ *       "list_todos",
+ *       "List and filter todos",
+ *       listTodosToolSchema,
+ *       async (args) => {
+ *         const result = await todoService.findMany(args);
+ *         return {
+ *           content: [{ type: "text", text: JSON.stringify(result) }],
+ *         };
+ *       },
+ *       { annotations: { readOnlyHint: true } }
+ *     );
+ *
+ *  3. Create MCP server:
+ *     const mcpServer = createSdkMcpServer({
+ *       name: "cognitask",
+ *       version: "0.1.0",
+ *       tools: [listTodosTool, createTodoTool, ...],
+ *     });
+ *
+ *  4. Pass mcpServer to query() options as mcpServers: [mcpServer]
+ * ──────────────────────────────────────────────────────────────────────
+ */
+
+export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolHandler }> = {
+  list_todos: {
+    schema: listTodosToolSchema,
+    handler: async (args) => {
+      const parsed = listTodosToolSchema.parse(args);
+      const { todos, total } = await todoService.findMany({
+        status: parsed.status,
+        priority: parsed.priority,
+        category: parsed.category,
+        search: parsed.search,
+        limit: parsed.limit,
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify({ total, todos }, null, 2) }],
+      };
+    },
+  },
+
+  create_todo: {
+    schema: createTodoToolSchema,
+    handler: async (args) => {
+      const parsed = createTodoToolSchema.parse(args);
+      const todo = await todoService.create(parsed);
+      return {
+        content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
+      };
+    },
+  },
+
+  update_todo: {
+    schema: updateTodoToolSchema,
+    handler: async (args) => {
+      const parsed = updateTodoToolSchema.parse(args);
+      const { id, ...rest } = parsed;
+      const todo = await todoService.update(id, rest);
+      return {
+        content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
+      };
+    },
+  },
+
+  complete_todo: {
+    schema: completeTodoToolSchema,
+    handler: async (args) => {
+      const parsed = completeTodoToolSchema.parse(args);
+      const todo = await todoService.updateStatus(parsed.id, "completed");
+      return {
+        content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
+      };
+    },
+  },
+
+  add_subtask: {
+    schema: addSubtaskToolSchema,
+    handler: async (args) => {
+      const parsed = addSubtaskToolSchema.parse(args);
+      const { parentId, ...rest } = parsed;
+      const subtask = await todoService.create({ ...rest, parentId });
+      return {
+        content: [{ type: "text", text: JSON.stringify(subtask, null, 2) }],
+      };
+    },
+  },
+
+  search_todos: {
+    schema: searchTodosToolSchema,
+    handler: async (args) => {
+      const parsed = searchTodosToolSchema.parse(args);
+      const { todos, total } = await todoService.findMany({
+        search: parsed.query,
+        limit: parsed.limit,
+      });
+      return {
+        content: [{ type: "text", text: JSON.stringify({ total, todos }, null, 2) }],
+      };
+    },
+  },
+
+  get_todo_stats: {
+    schema: z.object({}),
+    handler: async () => {
+      const stats = await todoService.getStats();
+      return {
+        content: [{ type: "text", text: JSON.stringify(stats, null, 2) }],
+      };
+    },
+  },
+
+  decompose_goal: {
+    schema: decomposeGoalToolSchema,
+    handler: async (args) => {
+      const parsed = decomposeGoalToolSchema.parse(args);
+      // This will use the real AI service when SDK is integrated
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                goal: parsed.goal,
+                status: "ready_for_sdk_integration",
+                message:
+                  "When the Claude Agent SDK is added, this tool will decompose the goal into structured tasks using Claude's reasoning.",
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
+    },
+  },
+
+  analyze_productivity: {
+    schema: analyzeProductivityToolSchema,
+    handler: async () => {
+      const dashboard = await statsService.getDashboard();
+      return {
+        content: [{ type: "text", text: JSON.stringify(dashboard, null, 2) }],
+      };
+    },
+  },
+};
