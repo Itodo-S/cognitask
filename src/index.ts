@@ -26,6 +26,10 @@ import { smartRoutes } from "./api/routes/smart.routes.js";
 import { activityRoutes } from "./api/routes/activity.routes.js";
 import { focusRoutes } from "./api/routes/focus.routes.js";
 import { calendarRoutes } from "./api/routes/calendar.routes.js";
+import { projectRoutes } from "./api/routes/project.routes.js";
+import { duplicateRoutes } from "./api/routes/duplicate.routes.js";
+import { searchRoutes } from "./api/routes/search.routes.js";
+import { reportRoutes } from "./api/routes/report.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -68,6 +72,10 @@ await app.register(smartRoutes);
 await app.register(activityRoutes);
 await app.register(focusRoutes);
 await app.register(calendarRoutes);
+await app.register(projectRoutes);
+await app.register(duplicateRoutes);
+await app.register(searchRoutes);
+await app.register(reportRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
