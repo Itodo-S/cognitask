@@ -44,6 +44,8 @@ import { noteRoutes } from "./api/routes/note.routes.js";
 import { workspaceRoutes } from "./api/routes/workspace.routes.js";
 import { timeTrackingRoutes } from "./api/routes/time-tracking.routes.js";
 import { knowledgeBaseRoutes } from "./api/routes/knowledge.routes.js";
+import { journalRoutes } from "./api/routes/journal.routes.js";
+import { focusSessionRoutes } from "./api/routes/focus-session.routes.js";
 import { wsRoutes } from "./ws/index.js";
 import { logger } from "./utils/logger.js";
 
@@ -104,6 +106,8 @@ await app.register(noteRoutes);
 await app.register(workspaceRoutes);
 await app.register(timeTrackingRoutes);
 await app.register(knowledgeBaseRoutes);
+await app.register(journalRoutes);
+await app.register(focusSessionRoutes);
 
 // ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
