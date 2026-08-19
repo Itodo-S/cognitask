@@ -42,3 +42,27 @@ export {
   type FocusModeInput,
   type SmartSortInput,
 } from "./smart-tools.schema.js";
+
+export {
+  prioritySortSchema,
+  tagFilterSchema,
+  dueDateFilterSchema,
+  textSearchSchema,
+  type PrioritySortInput,
+  type TagFilterInput,
+  type DueDateFilterInput,
+  type TextSearchInput,
+} from "./filter-tools.schema.js";
+
+export {
+  undoActionSchema,
+  redoActionSchema,
+  getHistorySchema,
+} from "./history-tools.schema.js";
+
+export {
+  createProjectSchema,
+  addToProjectSchema,
+  listProjectsSchema,
+  type CreateProjectInput,
+} from "./project-tools.schema.js";
