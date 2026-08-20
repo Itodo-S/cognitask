@@ -78,6 +78,8 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
               "transition-all duration-200",
               todo.status === "completed"
                 ? "bg-ink-900 border-ink-900"
+                : todo.status === "in_progress"
+                ? "border-blue-500 bg-blue-50"
                 : "border-ink-300 hover:border-ink-500"
             )}
           >
@@ -93,6 +95,15 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
                 >
                   <path d="M2.5 6l2.5 2.5L9.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </motion.svg>
+              )}
+              {todo.status === "in_progress" && (
+                <motion.div
+                  key="progress"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="w-2.5 h-2.5 rounded-sm bg-blue-500"
+                />
               )}
             </AnimatePresence>
           </button>
@@ -194,6 +205,29 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
           {/* Actions */}
           {!editing && (
             <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+              {todo.status !== "completed" && (
+                <Tooltip content={todo.status === "in_progress" ? "Pause" : "Start"} side="top">
+                  <button
+                    onClick={() => {
+                      const next = todo.status === "in_progress" ? "pending" : "in_progress";
+                      updateStatus(todo.id, next);
+                      toast(next === "in_progress" ? "Task started" : "Task paused");
+                    }}
+                    className="w-7 h-7 flex items-center justify-center rounded text-ink-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  >
+                    {todo.status === "in_progress" ? (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                        <rect x="3" y="3" width="3" height="8" />
+                        <rect x="8" y="3" width="3" height="8" />
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+                        <path d="M4 2.5v9l7-4.5-7-4.5z" />
+                      </svg>
+                    )}
+                  </button>
+                </Tooltip>
+              )}
               <Tooltip content="Edit" side="top">
                 <button
                   onClick={() => setEditing(true)}

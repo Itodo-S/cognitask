@@ -19,7 +19,8 @@ import type { AIService } from "./ai.service.js";
 import { MockAIService } from "./ai.service.js";
 import { logger } from "../utils/logger.js";
 
-const SDK_OPTIONS: Options = {
+// ── Shared SDK options ──────────────────────────────────────
+export const SDK_OPTIONS: Options = {
   mcpServers: { cognitask: cognitaskMcpServer },
   allowedTools: ["mcp__cognitask__*"],
   permissionMode: (env.CLAUDE_PERMISSION_MODE ?? "bypassPermissions") as Options["permissionMode"],
@@ -29,73 +30,84 @@ const SDK_OPTIONS: Options = {
   cwd: env.CLAUDE_CWD,
 };
 
-async function collectResult(messages: AsyncIterable<any>): Promise<{ result: string; sessionId: string | null }> {
-  let result = "";
-  let sessionId: string | null = null;
+export { query as sdkQuery };
 
+// ── Shared JSON parser ──────────────────────────────────────
+function parseJSON(text: string): any {
+  const jsonMatch = text.match(/\{[\s\S]*\}/) || text.match(/\[[\s\S]*\]/);
+  if (jsonMatch) {
+    try { return JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
+  }
+  try { return JSON.parse(text); } catch { return {}; }
+}
+
+function parseDecomposedTodos(text: string, goal: string): DecomposedTodo[] {
+  const parsed = parseJSON(text);
+  if (Array.isArray(parsed)) {
+    return parsed.map((t: any) => ({
+      title: t.title ?? `Task for: ${goal}`,
+      description: t.description ?? `Step in achieving: ${goal}`,
+      priority: t.priority ?? "medium",
+      category: t.category ?? "work",
+      estimatedMinutes: t.estimatedMinutes,
+    }));
+  }
+  return [{
+    title: `Task: ${goal}`,
+    description: `Step in achieving: ${goal}`,
+    priority: "medium",
+    category: "work",
+  }];
+}
+
+// ── Collect SDK query result ─────────────────────────────────
+async function sdkQueryCollect(
+  prompt: string,
+  system: string,
+  maxTurns: number,
+): Promise<string> {
+  let result = "";
+  const messages = query({
+    prompt: `${system}\n\n${prompt}`,
+    options: {
+      ...SDK_OPTIONS,
+      maxTurns,
+    },
+  });
   for await (const msg of messages) {
-    if (msg.type === "system" && msg.subtype === "init") {
-      sessionId = msg.session_id ?? null;
-    }
     if (msg.type === "result" && msg.subtype === "success") {
       result = msg.result ?? "";
     }
   }
-  return { result, sessionId };
+  return result;
 }
 
+// ── ClaudeAIService ─────────────────────────────────────────
 export class ClaudeAIService implements AIService {
   async *decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult> {
-    yield { type: "thinking", data: { message: "Analyzing goal with Claude..." } };
+    yield { type: "thinking", data: { message: "Analyzing goal..." } };
 
     const maxTasks = request.maxTasks ?? 5;
     const contextBlock = request.context ? `\nAdditional context: ${request.context}` : "";
 
-    const prompt = `You are a task decomposition expert. Analyze this goal and break it into ${maxTasks} actionable, well-structured tasks.
+    const prompt = `Break this goal into exactly ${maxTasks} actionable tasks. Reply with ONLY a JSON array, no other text.
 
 Goal: "${request.goal}"
 ${contextBlock}
 
-For each task, use the create_todo tool to create it with:
-- A clear, specific title
-- A helpful description explaining what needs to be done
-- An appropriate priority (urgent/high/medium/low) based on importance and dependencies
-- A category (work, personal, health, finance, learning, creative, errands, social, or other)
-- An estimated due date if applicable
+Each task object must have: title (string), description (string), priority ("low"|"medium"|"high"|"urgent"), category ("work"|"personal"|"health"|"finance"|"learning"|"creative"|"errands"|"social"|"other").
 
-Create tasks in logical order, starting with research/planning and ending with review/follow-up. Make each task actionable and specific to the goal.`;
+Example: [{"title":"...","description":"...","priority":"medium","category":"work"}]
 
-    let sessionId: string | null = null;
+Create tasks in logical order. Make each task specific and actionable.`;
+
     let resultText = "";
-
     try {
-      const messages = query({
+      resultText = await sdkQueryCollect(
         prompt,
-        options: { ...SDK_OPTIONS },
-      });
-
-      for await (const msg of messages) {
-        if (msg.type === "system" && msg.subtype === "init") {
-          sessionId = msg.session_id ?? null;
-          yield { type: "thinking", data: { message: "Claude session started", sessionId } };
-        }
-
-        if (msg.type === "assistant" && msg.message?.content) {
-          for (const block of msg.message.content) {
-            if (block.type === "tool_use") {
-              yield { type: "thinking", data: { message: `Calling tool: ${block.name}` } };
-            }
-          }
-        }
-
-        if (msg.type === "result") {
-          if (msg.subtype === "success") {
-            resultText = msg.result ?? "";
-          } else {
-            logger.warn("Claude decompose non-success result", { subtype: msg.subtype });
-          }
-        }
-      }
+        "You are a task decomposition expert. Return only valid JSON.",
+        1,
+      );
     } catch (err) {
       logger.error("Claude decompose error", { error: String(err) });
       yield { type: "error", data: { message: String(err) } };
@@ -103,27 +115,29 @@ Create tasks in logical order, starting with research/planning and ending with r
 
     yield { type: "complete", data: { message: "Decomposition complete" } };
 
-    const todos = this.parseDecomposedTodos(resultText, request.goal);
+    const todos = parseDecomposedTodos(resultText, request.goal);
     return {
-      sessionId: sessionId ?? crypto.randomUUID(),
+      sessionId: crypto.randomUUID(),
       todos,
-      summary: resultText || `Decomposed "${request.goal}" into ${todos.length} tasks using Claude.`,
+      summary: resultText || `Decomposed "${request.goal}" into ${todos.length} tasks.`,
     };
   }
 
   async categorize(request: CategorizeRequest): Promise<CategorizeResult> {
-    const prompt = `Categorize this task into exactly one category. Reply with ONLY valid JSON, no other text.
+    try {
+      const result = await sdkQueryCollect(
+        `Categorize this task. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
 ${request.description ? `Description: "${request.description}"` : ""}
 
 Categories: work, personal, health, finance, learning, creative, errands, social, other
 
-Reply format: {"category": "<category>", "confidence": <0.0-1.0>, "reasoning": "<brief reason>"}`;
-
-    try {
-      const { result } = await collectResult(query({ prompt, options: { ...SDK_OPTIONS, maxTurns: 3 } }));
-      const parsed = this.parseJSON(result);
+Format: {"category": "<category>", "confidence": <0.0-1.0>, "reasoning": "<brief>"}`,
+        "Return only valid JSON.",
+        1,
+      );
+      const parsed = parseJSON(result);
       return {
         category: parsed.category ?? "other",
         confidence: parsed.confidence ?? 0.7,
@@ -136,18 +150,20 @@ Reply format: {"category": "<category>", "confidence": <0.0-1.0>, "reasoning": "
   }
 
   async prioritize(request: PrioritizeRequest): Promise<PrioritizeResult> {
-    const prompt = `Prioritize this task. Reply with ONLY valid JSON, no other text.
+    try {
+      const result = await sdkQueryCollect(
+        `Prioritize this task. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
 ${request.description ? `Description: "${request.description}"` : ""}
 ${request.dueDate ? `Due: ${request.dueDate}` : ""}
-${request.existingTodos?.length ? `Existing tasks: ${JSON.stringify(request.existingTodos)}` : ""}
+${request.existingTodos?.length ? `Existing: ${JSON.stringify(request.existingTodos)}` : ""}
 
-Reply format: {"priority": "<low|medium|high|urgent>", "reasoning": "<brief reason>"}`;
-
-    try {
-      const { result } = await collectResult(query({ prompt, options: { ...SDK_OPTIONS, maxTurns: 3 } }));
-      const parsed = this.parseJSON(result);
+Format: {"priority": "<low|medium|high|urgent>", "reasoning": "<brief>"}`,
+        "Return only valid JSON.",
+        1,
+      );
+      const parsed = parseJSON(result);
       return {
         priority: parsed.priority ?? "medium",
         reasoning: parsed.reasoning ?? "Claude prioritization.",
@@ -163,16 +179,18 @@ Reply format: {"priority": "<low|medium|high|urgent>", "reasoning": "<brief reas
       ? `\nCurrent tasks:\n${request.currentTodos.map((t) => `- [${t.status}] [${t.priority}] ${t.title}`).join("\n")}`
       : "\nNo current tasks.";
 
-    const prompt = `You are a productivity assistant. Based on the current tasks, suggest 2-3 actionable next steps or improvements.
+    try {
+      const result = await sdkQueryCollect(
+        `Based on current tasks, suggest 2-3 actionable next steps.
 ${todosContext}
 ${request.context ? `\nContext: ${request.context}` : ""}
 
-Reply with ONLY a valid JSON array, no other text.
-Each suggestion: {"title": "...", "description": "...", "priority": "low|medium|high", "category": "...", "reason": "..."}`;
-
-    try {
-      const { result } = await collectResult(query({ prompt, options: { ...SDK_OPTIONS, maxTurns: 3 } }));
-      const parsed = this.parseJSON(result);
+Reply with ONLY a valid JSON array.
+Each: {"title":"...","description":"...","priority":"low|medium|high","category":"...","reason":"..."}`,
+        "Return only a valid JSON array.",
+        1,
+      );
+      const parsed = parseJSON(result);
       return Array.isArray(parsed) ? parsed : [parsed];
     } catch (err) {
       logger.error("Claude suggest error", { error: String(err) });
@@ -181,16 +199,18 @@ Each suggestion: {"title": "...", "description": "...", "priority": "low|medium|
   }
 
   async estimate(request: EstimateRequest): Promise<EstimateResult> {
-    const prompt = `Estimate the time and complexity of this task. Reply with ONLY valid JSON, no other text.
+    try {
+      const result = await sdkQueryCollect(
+        `Estimate time and complexity. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
 ${request.description ? `Description: "${request.description}"` : ""}
 
-Reply format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|complex>", "reasoning": "<brief reason>"}`;
-
-    try {
-      const { result } = await collectResult(query({ prompt, options: { ...SDK_OPTIONS, maxTurns: 3 } }));
-      const parsed = this.parseJSON(result);
+Format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|complex>", "reasoning": "<brief>"}`,
+        "Return only valid JSON.",
+        1,
+      );
+      const parsed = parseJSON(result);
       return {
         estimatedMinutes: parsed.estimatedMinutes ?? 60,
         complexity: parsed.complexity ?? "moderate",
@@ -201,38 +221,11 @@ Reply format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|com
       return { estimatedMinutes: 60, complexity: "moderate", reasoning: "Error during estimation." };
     }
   }
-
-  private parseJSON(text: string): any {
-    const jsonMatch = text.match(/\{[\s\S]*\}/) || text.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      try { return JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
-    }
-    try { return JSON.parse(text); } catch { return {}; }
-  }
-
-  private parseDecomposedTodos(text: string, goal: string): DecomposedTodo[] {
-    const parsed = this.parseJSON(text);
-    if (Array.isArray(parsed)) {
-      return parsed.map((t: any) => ({
-        title: t.title ?? `Task for: ${goal}`,
-        description: t.description ?? `Step in achieving: ${goal}`,
-        priority: t.priority ?? "medium",
-        category: t.category ?? "work",
-        estimatedMinutes: t.estimatedMinutes,
-      }));
-    }
-    return [{
-      title: `Task: ${goal}`,
-      description: `Step in achieving: ${goal}`,
-      priority: "medium",
-      category: "work",
-    }];
-  }
 }
 
 export function createAIService(): AIService {
   if (env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN) {
-    logger.info("Using ClaudeAIService (SDK with real API key)");
+    logger.info("Using ClaudeAIService (Anthropic SDK)");
     return new ClaudeAIService();
   }
   logger.info("Using MockAIService (no ANTHROPIC_API_KEY set)");

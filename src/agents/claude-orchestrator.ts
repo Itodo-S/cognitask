@@ -1,5 +1,4 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { env } from "../config/env.js";
+import { sdkQuery, SDK_OPTIONS } from "../services/claude-ai.service.js";
 import { cognitaskMcpServer } from "./sdk-tools.js";
 import type { AIService } from "../services/ai.service.js";
 import type { DecomposeRequest } from "../types/ai.js";
@@ -81,15 +80,20 @@ export class ClaudeOrchestrator {
     let response = "";
 
     try {
-      const messages = query({
-        prompt: message,
+      const { todos, total } = await todoService.findMany({ limit: 50 });
+      const todoContext = todos.length > 0
+        ? `\n\nCurrent todos (${total} total):\n${todos.map((t) => `- [${t.status}] [${t.priority}] ${t.title}${t.dueDate ? ` (due: ${t.dueDate})` : ""}`).join("\n")}`
+        : "\n\nNo todos yet.";
+
+      const messages = sdkQuery({
+        prompt: `You are a concise AI assistant for a todo app called CogniTask. Answer briefly in 1-3 sentences. Use the todo context provided to answer questions about tasks. Only use MCP tools when the user explicitly asks to create, update, or manage tasks.\n\nUser: ${message}\n\nTodo context:${todoContext}`,
         options: {
           mcpServers: { cognitask: cognitaskMcpServer },
           allowedTools: ["mcp__cognitask__*"],
           permissionMode: "bypassPermissions",
           allowDangerouslySkipPermissions: true,
-          maxTurns: env.CLAUDE_MAX_TURNS,
-          model: env.CLAUDE_MODEL,
+          maxTurns: 3,
+          model: SDK_OPTIONS.model,
           continue: !!resolvedSessionId,
           ...(resolvedSessionId ? { sessionId: resolvedSessionId } : {}),
         },
@@ -141,16 +145,24 @@ export class ClaudeOrchestrator {
 
   async autoCategorize(todoIds: string[]) {
     const results: Array<{ id: string; category: string; confidence: number }> = [];
+
     for (const id of todoIds) {
       const todo = await todoService.findById(id);
       if (!todo) continue;
-      const result = await this.ai.categorize({
-        title: todo.title,
-        description: todo.description ?? undefined,
-      });
-      await todoService.update(id, { category: result.category as any });
-      results.push({ id, category: result.category, confidence: result.confidence });
+
+      try {
+        const result = await this.ai.categorize({
+          title: todo.title,
+          description: todo.description ?? undefined,
+        });
+
+        await todoService.update(id, { category: result.category as any });
+        results.push({ id, category: result.category, confidence: result.confidence });
+      } catch (err) {
+        logger.error("Auto-categorize failed", { id, error: String(err) });
+      }
     }
+
     return results;
   }
 

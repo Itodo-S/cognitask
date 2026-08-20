@@ -5,7 +5,7 @@ import type {
   DecomposedTodo,
 } from "@/types";
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "") + "/api";
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000") + "/api";
 
 function stripEmpty(obj: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
