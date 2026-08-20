@@ -14,7 +14,6 @@ import {
   analyzeProductivityToolSchema,
 } from "./tools/planning-tools.schema.js";
 import { quickAddToolSchema } from "./tools/smart-tools.schema.js";
-import { todoService } from "../../services/todo.service.js";
 
 /**
  * Tool handler function type.

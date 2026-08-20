@@ -1,5 +1,5 @@
 import type { AIService } from "../services/ai.service.js";
-import type { DecomposeRequest, SuggestRequest } from "../types/ai.js";
+import type { DecomposeRequest, DecomposeResult, SuggestRequest } from "../types/ai.js";
 import { todoService } from "../services/todo.service.js";
 import { aiService } from "../services/ai.service.js";
 
@@ -41,8 +41,10 @@ export class AgentOrchestrator {
     const generator = this.ai.decompose(request);
     let result = null;
 
-    for await (const _event of generator) {
-      // Events can be broadcast via WebSocket in real apps
+    for await (const event of generator) {
+      if (event.type === "complete") {
+        result = event.data as DecomposeResult;
+      }
     }
 
     if (!result) {
