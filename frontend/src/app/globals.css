@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+@layer base {
+  :root {
+    --paper-bg: #fefefe;
+    --paper-surface: #f8f8f8;
+    --ink-primary: #171717;
+    --ink-secondary: #525252;
+    --ink-muted: #a3a3a3;
+    --ink-faint: #d4d4d4;
+    --line-color: #e5e5e5;
+    --paper-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --paper-radius: 6px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-paper-50 text-ink-900 font-serif;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(0, 0, 0, 0.01) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.008) 0%, transparent 50%);
+  }
+
+  ::selection {
+    @apply bg-ink-900 text-paper-50;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-300 rounded-full;
+    border: 2px solid transparent;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-400;
+  }
+}
+
+@layer components {
+  .paper-card {
+    @apply bg-paper-50 border border-ink-200/60 rounded-lg shadow-paper;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .paper-card:hover {
+    @apply shadow-paper-md;
+  }
+
+  .paper-input {
+    @apply w-full px-3 py-2 bg-paper-50 border border-ink-200 rounded-md
+           font-sans text-sm text-ink-900 placeholder:text-ink-400
+           focus:outline-none focus:ring-1 focus:ring-ink-900/20 focus:border-ink-900/40
+           transition-all duration-200;
+  }
+
+  .paper-btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           font-sans text-sm font-medium rounded-md
+           border border-ink-900 bg-ink-900 text-paper-50
+           hover:bg-ink-800 active:bg-ink-950
+           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
+           transition-all duration-150 ease-out
+           disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
+  }
+
+  .paper-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           font-sans text-sm font-medium rounded-md
+           border border-transparent bg-transparent text-ink-700
+           hover:bg-ink-100 active:bg-ink-200
+           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
+           transition-all duration-150 ease-out;
+  }
+
+  .paper-btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2
+           font-sans text-sm font-medium rounded-md
+           border border-ink-300 bg-paper-50 text-ink-700
+           hover:bg-ink-50 hover:border-ink-400 active:bg-ink-100
+           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
+           transition-all duration-150 ease-out;
+  }
+
+  .paper-divider {
+    @apply w-full h-px bg-ink-200/60;
+  }
+
+  .paper-checkbox {
+    @apply w-4 h-4 rounded border border-ink-300 bg-paper-50
+           checked:bg-ink-900 checked:border-ink-900
+           focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
+           cursor-pointer transition-all duration-150;
+  }
+
+  .paper-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full
+           font-sans text-xs font-medium border;
+  }
+
+  .paper-tooltip {
+    @apply absolute z-50 px-2.5 py-1.5 rounded-md
+           bg-ink-900 text-paper-50 font-sans text-xs
+           shadow-lg pointer-events-none
+           animate-fade-in;
+  }
+
+  .paper-toast {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg
+           bg-paper-50 border border-ink-200 shadow-paper-lg
+           font-sans text-sm text-ink-800
+           animate-slide-up;
+  }
+
+  .paper-modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center
+           bg-ink-900/30 backdrop-blur-sm
+           animate-fade-in;
+  }
+
+  .paper-modal {
+    @apply w-full max-w-lg mx-4 p-6
+           bg-paper-50 border border-ink-200 rounded-xl shadow-paper-2xl
+           animate-scale-in;
+  }
+
+  .paper-nav-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-md
+           font-sans text-sm text-ink-600
+           hover:bg-ink-100 hover:text-ink-900
+           active:bg-ink-200
+           transition-all duration-150 ease-out
+           cursor-pointer select-none;
+  }
+
+  .paper-nav-item-active {
+    @apply bg-ink-900 text-paper-50 hover:bg-ink-800;
+  }
+
+  /* Paper texture overlay for special cards */
+  .paper-texture {
+    background-image:
+      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.01) 50%, transparent 100%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        rgba(0, 0, 0, 0.03) 28px,
+        rgba(0, 0, 0, 0.03) 29px
+      );
+  }
+
+  /* Lined paper effect */
+  .paper-lined {
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 31px,
+        rgba(0, 0, 0, 0.06) 31px,
+        rgba(0, 0, 0, 0.06) 32px
+      );
+    background-position: 0 8px;
+  }
+
+  /* Dotted paper effect */
+  .paper-dotted {
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
+  .stagger-5 { animation-delay: 0.25s; }
+}
