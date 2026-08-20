@@ -7,6 +7,14 @@ import type {
 
 const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "") + "/api";
 
+function stripEmpty(obj: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== "" && v !== null && v !== undefined) out[k] = v;
+  }
+  return out;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...init?.headers },
@@ -36,10 +44,10 @@ export const todosApi = {
   get: (id: string) => request<Todo>(`/todos/${id}`),
 
   create: (data: { title: string; description?: string; priority?: string; category?: string; dueDate?: string; parentId?: string; tags?: string[] }) =>
-    request<Todo>("/todos", { method: "POST", body: JSON.stringify(data) }),
+    request<Todo>("/todos", { method: "POST", body: JSON.stringify(stripEmpty(data as Record<string, unknown>)) }),
 
   update: (id: string, data: Partial<Todo>) =>
-    request<Todo>(`/todos/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+    request<Todo>(`/todos/${id}`, { method: "PATCH", body: JSON.stringify(stripEmpty(data as Record<string, unknown>)) }),
 
   updateStatus: (id: string, status: string) =>
     request<Todo>(`/todos/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
