@@ -62,3 +62,17 @@ export interface DashboardData {
   recentCompletions: { id: string; title: string; completedAt: string }[];
   upcomingDue: { id: string; title: string; dueDate: string; priority: string }[];
 }
+
+export interface DashboardStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  completed: number;
+  overdue: number;
+  completionRate: number;
+  recentCompletions: { id: string; title: string; completedAt: string | null }[];
+  upcomingDeadlines: { id: string; title: string; dueDate: string | null; category?: string }[];
+  categoryBreakdown: { category: string; count: number }[];
+  priorityBreakdown: { priority: string; count: number }[];
+  aiInsights: string[];
+}

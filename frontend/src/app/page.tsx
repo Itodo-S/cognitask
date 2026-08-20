@@ -24,9 +24,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/dashboard/stats`)
+    const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/dashboard/stats`;
+    fetch(url)
       .then((r) => r.json())
-      .then(setStats)
+      .then((d) => setStats(d.data ?? d))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

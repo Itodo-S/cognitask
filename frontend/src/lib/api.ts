@@ -1,6 +1,6 @@
 import type { Todo, TodoFilter, TodoStats, DashboardData, Session } from "@/types";
 
-const BASE = "/api";
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001") + "/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

@@ -16,9 +16,10 @@ export default function CalendarPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/todos`)
+    const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/todos`;
+    fetch(url)
       .then((r) => r.json())
-      .then((data) => setTodos(data.todos ?? []))
+      .then((d) => setTodos(d.data ?? d.todos ?? d))
       .catch(() => {});
   }, []);
 
