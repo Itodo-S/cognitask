@@ -12,7 +12,7 @@ interface TooltipProps {
 
 export function Tooltip({ children, content, side = "top", className }: TooltipProps) {
   const [show, setShow] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleEnter = () => {
     timeoutRef.current = setTimeout(() => setShow(true), 400);
