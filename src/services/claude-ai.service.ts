@@ -231,7 +231,7 @@ Reply format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|com
 }
 
 export function createAIService(): AIService {
-  if (env.ANTHROPIC_API_KEY) {
+  if (env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN) {
     logger.info("Using ClaudeAIService (SDK with real API key)");
     return new ClaudeAIService();
   }

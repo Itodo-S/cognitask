@@ -12,6 +12,8 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW: z.coerce.number().default(60000),
   ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_BASE_URL: z.string().optional(),
+  ANTHROPIC_AUTH_TOKEN: z.string().optional(),
   CLAUDE_MODEL: z.string().optional(),
   CLAUDE_MAX_TURNS: z.coerce.number().default(30),
   CLAUDE_PERMISSION_MODE: z.enum(["default", "acceptEdits", "bypassPermissions"]).default("acceptEdits"),
