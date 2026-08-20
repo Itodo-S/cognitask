@@ -11,6 +11,11 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW: z.coerce.number().default(60000),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  CLAUDE_MODEL: z.string().optional(),
+  CLAUDE_MAX_TURNS: z.coerce.number().default(30),
+  CLAUDE_PERMISSION_MODE: z.enum(["default", "acceptEdits", "bypassPermissions"]).default("acceptEdits"),
+  CLAUDE_CWD: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
