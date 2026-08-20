@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { todoService } from "../../services/todo.service.js";
-import { statsService } from "../../services/stats.service.js";
+import { todoService } from "../services/todo.service.js";
+import { statsService } from "../services/stats.service.js";
 import {
   listTodosToolSchema,
   createTodoToolSchema,
@@ -64,7 +64,7 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
       const { todos, total } = await todoService.findMany({
         status: parsed.status,
         priority: parsed.priority,
-        category: parsed.category,
+        category: parsed.category as any,
         search: parsed.search,
         limit: parsed.limit,
       });
@@ -78,7 +78,7 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
     schema: createTodoToolSchema,
     handler: async (args) => {
       const parsed = createTodoToolSchema.parse(args);
-      const todo = await todoService.create(parsed);
+      const todo = await todoService.create(parsed as any);
       return {
         content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
       };
@@ -90,7 +90,7 @@ export const toolHandlers: Record<string, { schema: z.ZodTypeAny; handler: ToolH
     handler: async (args) => {
       const parsed = updateTodoToolSchema.parse(args);
       const { id, ...rest } = parsed;
-      const todo = await todoService.update(id, rest);
+      const todo = await todoService.update(id, rest as any);
       return {
         content: [{ type: "text", text: JSON.stringify(todo, null, 2) }],
       };

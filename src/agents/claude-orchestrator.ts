@@ -2,7 +2,7 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import { env } from "../config/env.js";
 import { cognitaskMcpServer } from "./sdk-tools.js";
 import type { AIService } from "../services/ai.service.js";
-import type { DecomposeRequest, SuggestRequest } from "../types/ai.js";
+import type { DecomposeRequest } from "../types/ai.js";
 import { todoService } from "../services/todo.service.js";
 import { sessionService } from "../services/session.service.js";
 import { wsGateway } from "../ws/gateway.js";

@@ -1,4 +1,4 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
+import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import { env } from "../config/env.js";
 import { cognitaskMcpServer } from "../agents/sdk-tools.js";
 import type {
@@ -18,15 +18,15 @@ import type {
 import type { AIService } from "./ai.service.js";
 import { logger } from "../utils/logger.js";
 
-const SDK_OPTIONS = {
+const SDK_OPTIONS: Options = {
   mcpServers: { cognitask: cognitaskMcpServer },
   allowedTools: ["mcp__cognitask__*"],
-  permissionMode: (env.CLAUDE_PERMISSION_MODE ?? "bypassPermissions") as "bypassPermissions" | "acceptEdits" | "default",
+  permissionMode: (env.CLAUDE_PERMISSION_MODE ?? "bypassPermissions") as Options["permissionMode"],
   allowDangerouslySkipPermissions: true,
   maxTurns: env.CLAUDE_MAX_TURNS,
   model: env.CLAUDE_MODEL,
   cwd: env.CLAUDE_CWD,
-} as const;
+};
 
 async function collectResult(messages: AsyncIterable<any>): Promise<{ result: string; sessionId: string | null }> {
   let result = "";

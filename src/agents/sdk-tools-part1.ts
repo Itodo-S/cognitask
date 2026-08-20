@@ -1,7 +1,6 @@
-import { tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
+import { tool } from "@anthropic-ai/claude-agent-sdk";
 import { z } from "zod";
 import { todoService } from "../services/todo.service.js";
-import { statsService } from "../services/stats.service.js";
 
 const listTodos = tool(
   "list_todos",
@@ -58,7 +57,7 @@ const updateTodo = tool(
   },
   async (args) => {
     const { id, ...rest } = args;
-    const todo = await todoService.update(id, rest);
+    const todo = await todoService.update(id, rest as any);
     return { content: [{ type: "text", text: JSON.stringify(todo, null, 2) }] };
   },
   { annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true } }

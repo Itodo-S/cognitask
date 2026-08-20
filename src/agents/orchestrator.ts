@@ -1,5 +1,5 @@
 import type { AIService } from "../services/ai.service.js";
-import type { DecomposeRequest, DecomposeResult, SuggestRequest } from "../types/ai.js";
+import type { DecomposeRequest, DecomposeResult } from "../types/ai.js";
 import { todoService } from "../services/todo.service.js";
 import { aiService } from "../services/ai.service.js";
 
