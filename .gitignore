@@ -6,3 +6,9 @@ dist/
 *.log
 coverage/
 .turbo/
+frontend/.next/
+frontend/node_modules/
+*.db
+*.db-shm
+*.db-wal
+.vscode/
