@@ -1,6 +1,11 @@
-import type { Todo, TodoFilter, TodoStats, DashboardData, Session } from "@/types";
+import type {
+  Todo, TodoFilter, TodoStats, DashboardData, Session,
+  AiChatResponse, AiSession, AiSuggestion, AiDecomposeResponse,
+  AiCategorizeResponse, AiPrioritizeResponse, AiEstimateResponse,
+  DecomposedTodo,
+} from "@/types";
 
-const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001") + "/api";
+const BASE = (process.env.NEXT_PUBLIC_API_URL ?? "") + "/api";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
@@ -49,34 +54,63 @@ export const todosApi = {
 
 // ── AI ────────────────────────────────────────────────────────
 export const aiApi = {
-  decompose: (goal: string, context?: string) =>
-    request<{ events: unknown[]; result: unknown }>("/ai/decompose", {
+  chat: (message: string, sessionId?: string) =>
+    request<AiChatResponse>("/ai/chat", {
       method: "POST",
-      body: JSON.stringify({ goal, context }),
+      body: JSON.stringify({ message, sessionId }),
+    }),
+
+  decompose: (goal: string, context?: string, saveTasks = false) =>
+    request<AiDecomposeResponse>("/ai/decompose", {
+      method: "POST",
+      body: JSON.stringify({ goal, context, saveTasks }),
+    }),
+
+  suggest: (context?: string) =>
+    request<AiSuggestion[]>("/ai/suggest", {
+      method: "POST",
+      body: JSON.stringify({ context }),
     }),
 
   categorize: (title: string, description?: string) =>
-    request<{ category: string; confidence: number; reasoning: string }>("/ai/categorize", {
+    request<AiCategorizeResponse>("/ai/categorize", {
       method: "POST",
       body: JSON.stringify({ title, description }),
     }),
 
   prioritize: (title: string, description?: string) =>
-    request<{ priority: string; reasoning: string }>("/ai/prioritize", {
+    request<AiPrioritizeResponse>("/ai/prioritize", {
       method: "POST",
       body: JSON.stringify({ title, description }),
-    }),
-
-  suggest: (context?: string) =>
-    request<{ title: string; description: string; priority: string; category: string; reason: string }[]>("/ai/suggest", {
-      method: "POST",
-      body: JSON.stringify({ context }),
     }),
 
   estimate: (title: string, description?: string) =>
-    request<{ estimatedMinutes: number; complexity: string; reasoning: string }>("/ai/estimate", {
+    request<AiEstimateResponse>("/ai/estimate", {
       method: "POST",
       body: JSON.stringify({ title, description }),
+    }),
+
+  autoCategorize: (todoIds: string[]) =>
+    request<{ id: string; category: string; confidence: number }[]>("/ai/auto-categorize", {
+      method: "POST",
+      body: JSON.stringify({ todoIds }),
+    }),
+
+  sessions: () => request<AiSession[]>("/ai/sessions"),
+
+  sessionMessages: (id: string) =>
+    request<AiSession>(`/ai/sessions/${id}`),
+
+  plan: (goal: string, context?: string, saveTasks = false) =>
+    request<{ goal: string; tasks: DecomposedTodo[]; savedIds: string[]; sessionId: string; summary: string }>("/v2/ai/plan", {
+      method: "POST",
+      body: JSON.stringify({ goal, context, saveTasks }),
+    }),
+
+  refine: (todoId: string) =>
+    request<{ original: Todo; suggestions: { improvedTitle: string; suggestedDescription: string; suggestedPriority: string; suggestedCategory: string; subtasks: string[] } }>("/v2/ai/refine", {
+      method: "POST",
+      body: JSON.stringify({ todoId }),
     }),
 };
 

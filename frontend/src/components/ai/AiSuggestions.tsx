@@ -5,33 +5,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-interface Suggestion {
-  title: string;
-  description: string;
-  priority: string;
-  category: string;
-  reason: string;
-}
+import { aiApi } from "@/lib/api";
+import { useTodoStore } from "@/stores/todoStore";
+import type { AiSuggestion } from "@/types";
 
 export function AiSuggestions() {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<AiSuggestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [context, setContext] = useState("");
   const { toast } = useToast();
+  const createTodo = useTodoStore((s) => s.createTodo);
 
   const fetchSuggestions = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/ai/suggest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ context: context || undefined }),
-      });
-      const data = await res.json();
-      setSuggestions(data.suggestions ?? data.data ?? data);
+      const data = await aiApi.suggest(context || undefined);
+      setSuggestions(Array.isArray(data) ? data : []);
     } catch {
       toast("Failed to get suggestions", "error");
     } finally {
@@ -39,18 +28,36 @@ export function AiSuggestions() {
     }
   };
 
-  const acceptSuggestion = async (s: Suggestion) => {
+  const acceptSuggestion = async (s: AiSuggestion) => {
     try {
-      await fetch(`${API}/api/todos`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: s.title, description: s.description, priority: s.priority, category: s.category }),
+      await createTodo({
+        title: s.title,
+        description: s.description,
+        priority: s.priority,
+        category: s.category,
       });
       toast(`Added: ${s.title}`);
       setSuggestions((prev) => prev.filter((x) => x !== s));
     } catch {
       toast("Failed to create task", "error");
     }
+  };
+
+  const acceptAll = async () => {
+    let added = 0;
+    for (const s of suggestions) {
+      try {
+        await createTodo({
+          title: s.title,
+          description: s.description,
+          priority: s.priority,
+          category: s.category,
+        });
+        added++;
+      } catch { /* skip */ }
+    }
+    toast(`Added ${added} suggestions`);
+    setSuggestions([]);
   };
 
   return (
@@ -60,6 +67,7 @@ export function AiSuggestions() {
           type="text"
           value={context}
           onChange={(e) => setContext(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && fetchSuggestions()}
           placeholder="Optional context for suggestions..."
           className="paper-input flex-1"
         />
@@ -90,7 +98,7 @@ export function AiSuggestions() {
                       )}
                     </div>
                     {s.reason && (
-                      <p className="font-sans text-[11px] text-ink-400 mt-2 italic">"{s.reason}"</p>
+                      <p className="font-sans text-[11px] text-ink-400 mt-2 italic">&quot;{s.reason}&quot;</p>
                     )}
                   </div>
                   <Button
@@ -110,6 +118,16 @@ export function AiSuggestions() {
           </motion.div>
         ))}
       </AnimatePresence>
+
+      {suggestions.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex justify-end"
+        >
+          <Button onClick={acceptAll}>Accept All {suggestions.length}</Button>
+        </motion.div>
+      )}
 
       {suggestions.length === 0 && !loading && (
         <p className="font-sans text-sm text-ink-400 text-center py-8">

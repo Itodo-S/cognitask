@@ -76,3 +76,62 @@ export interface DashboardStats {
   priorityBreakdown: { priority: string; count: number }[];
   aiInsights: string[];
 }
+
+// ── AI Types ────────────────────────────────────────────────
+export interface AiChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: Date;
+  toolCalls?: { name: string; input: unknown }[];
+}
+
+export interface AiChatResponse {
+  response: string;
+  sessionId: string;
+}
+
+export interface AiSession {
+  id: string;
+  claudeSessionId: string | null;
+  title: string | null;
+  summary: string | null;
+  createdAt: string;
+  lastModified: string;
+}
+
+export interface AiSuggestion {
+  title: string;
+  description: string;
+  priority: string;
+  category: string;
+  reason: string;
+}
+
+export interface AiDecomposeResponse {
+  todos: DecomposedTodo[];
+  summary: string;
+  sessionId?: string;
+  savedIds?: string[];
+}
+
+export interface AiCategorizeResponse {
+  category: string;
+  confidence: number;
+  reasoning: string;
+}
+
+export interface AiPrioritizeResponse {
+  priority: string;
+  reasoning: string;
+}
+
+export interface AiEstimateResponse {
+  estimatedMinutes: number;
+  complexity: string;
+  reasoning: string;
+}
+
+export interface AiWsEvent {
+  event: string;
+  payload: unknown;
+}

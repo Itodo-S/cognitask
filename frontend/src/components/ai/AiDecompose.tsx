@@ -6,34 +6,26 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-interface DecomposedTask {
-  title: string;
-  description: string;
-  priority: string;
-  category: string;
-  estimatedMinutes?: number;
-}
+import { aiApi } from "@/lib/api";
+import { useTodoStore } from "@/stores/todoStore";
+import type { DecomposedTodo } from "@/types";
 
 export function AiDecompose() {
   const [goal, setGoal] = useState("");
-  const [tasks, setTasks] = useState<DecomposedTask[]>([]);
+  const [tasks, setTasks] = useState<DecomposedTodo[]>([]);
+  const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
+  const [adding, setAdding] = useState(false);
   const { toast } = useToast();
+  const createTodo = useTodoStore((s) => s.createTodo);
 
   const decompose = async () => {
     if (!goal.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/ai/decompose`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ goal: goal.trim() }),
-      });
-      const data = await res.json();
-      setTasks(data.tasks ?? data.result?.tasks ?? data.data ?? []);
+      const data = await aiApi.decompose(goal.trim());
+      setTasks(data.todos ?? []);
+      setSummary(data.summary ?? "");
     } catch {
       toast("Failed to decompose goal", "error");
     } finally {
@@ -42,13 +34,15 @@ export function AiDecompose() {
   };
 
   const addAll = async () => {
+    setAdding(true);
     let added = 0;
     for (const t of tasks) {
       try {
-        await fetch(`${API}/api/todos`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: t.title, description: t.description, priority: t.priority, category: t.category }),
+        await createTodo({
+          title: t.title,
+          description: t.description,
+          priority: t.priority,
+          category: t.category,
         });
         added++;
       } catch { /* skip */ }
@@ -56,6 +50,23 @@ export function AiDecompose() {
     toast(`Added ${added} tasks`);
     setTasks([]);
     setGoal("");
+    setSummary("");
+    setAdding(false);
+  };
+
+  const addSingle = async (t: DecomposedTodo) => {
+    try {
+      await createTodo({
+        title: t.title,
+        description: t.description,
+        priority: t.priority,
+        category: t.category,
+      });
+      toast(`Added: ${t.title}`);
+      setTasks((prev) => prev.filter((x) => x !== t));
+    } catch {
+      toast("Failed to add task", "error");
+    }
   };
 
   return (
@@ -75,6 +86,16 @@ export function AiDecompose() {
         </div>
       </div>
 
+      {summary && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-paper-100 border border-ink-200/60 rounded-xl px-4 py-3"
+        >
+          <p className="font-sans text-xs text-ink-500 italic">{summary}</p>
+        </motion.div>
+      )}
+
       <AnimatePresence mode="popLayout">
         {tasks.map((t, i) => (
           <motion.div
@@ -84,7 +105,7 @@ export function AiDecompose() {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 25 }}
           >
-            <Card>
+            <Card className="group">
               <CardContent>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
@@ -103,6 +124,17 @@ export function AiDecompose() {
                       )}
                     </div>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => addSingle(t)}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <path d="M7 2v10M2 7h10" />
+                    </svg>
+                    Add
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -116,7 +148,9 @@ export function AiDecompose() {
           animate={{ opacity: 1 }}
           className="flex justify-end"
         >
-          <Button onClick={addAll}>Add All {tasks.length} Tasks</Button>
+          <Button onClick={addAll} disabled={adding}>
+            {adding ? "Adding..." : `Add All ${tasks.length} Tasks`}
+          </Button>
         </motion.div>
       )}
     </div>
