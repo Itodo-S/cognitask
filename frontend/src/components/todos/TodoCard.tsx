@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import type { Todo, TodoPriority } from "@/types";
 import { useTodoStore } from "@/stores/todoStore";
 import { useToast } from "@/components/ui/Toast";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 
@@ -51,9 +51,14 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
   };
 
   return (
-    <div
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -12, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
       className={clsx(
-        "group animate-slide-up",
+        "group",
         depth > 0 && "ml-4 sm:ml-8 pl-4 border-l-2 border-ink-200/40"
       )}
     >
@@ -76,17 +81,31 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
                 : "border-ink-300 hover:border-ink-500"
             )}
           >
-            {todo.status === "completed" && (
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2.5 6l2.5 2.5L9.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+            <AnimatePresence mode="wait">
+              {todo.status === "completed" && (
+                <motion.svg
+                  key="check"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                  width="12" height="12" viewBox="0 0 12 12" fill="none"
+                >
+                  <path d="M2.5 6l2.5 2.5L9.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </motion.svg>
+              )}
+            </AnimatePresence>
           </button>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
             {editing ? (
-              <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-2"
+              >
                 <Input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
@@ -102,7 +121,7 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
                   <Button size="sm" onClick={handleSave}>Save</Button>
                   <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               <>
                 <div className="flex items-center gap-2">
@@ -116,11 +135,18 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
                   </h3>
                 </div>
 
-                {todo.description && expanded && (
-                  <p className="font-sans text-xs text-ink-500 mt-1 leading-relaxed">
-                    {todo.description}
-                  </p>
-                )}
+                <AnimatePresence>
+                  {todo.description && expanded && (
+                    <motion.p
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="font-sans text-xs text-ink-500 mt-1 leading-relaxed overflow-hidden"
+                    >
+                      {todo.description}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
 
                 {/* Meta row */}
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -190,13 +216,20 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
       </div>
 
       {/* Subtasks */}
-      {showSubtasks && todo.subtasks && (
-        <div className="mt-1 space-y-1">
-          {todo.subtasks.map((sub) => (
-            <TodoCard key={sub.id} todo={sub} depth={depth + 1} />
-          ))}
-        </div>
-      )}
-    </div>
+      <AnimatePresence>
+        {showSubtasks && todo.subtasks && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-1 space-y-1 overflow-hidden"
+          >
+            {todo.subtasks.map((sub) => (
+              <TodoCard key={sub.id} todo={sub} depth={depth + 1} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

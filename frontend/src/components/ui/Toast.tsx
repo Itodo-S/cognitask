@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, createContext, useContext } from "react";
+import { useState, useCallback, createContext, useContext } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 
 interface Toast {
@@ -38,24 +39,31 @@ export function Toaster() {
   return (
     <ToastContext.Provider value={{ toast }}>
       <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
-        {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-lg",
-              "bg-paper-50 border shadow-paper-lg",
-              "font-sans text-sm animate-slide-up",
-              "cursor-pointer hover:shadow-paper-xl transition-shadow",
-              t.type === "success" && "border-ink-300",
-              t.type === "error" && "border-red-300",
-              t.type === "info" && "border-ink-200"
-            )}
-            onClick={() => remove(t.id)}
-          >
-            <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-ink-900" />
-            <span className="text-ink-800">{t.message}</span>
-          </div>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {toasts.map((t) => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, y: 12, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 20, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              layout
+              className={clsx(
+                "flex items-center gap-3 px-4 py-3 rounded-lg",
+                "bg-paper-50 border shadow-paper-lg",
+                "font-sans text-sm",
+                "cursor-pointer hover:shadow-paper-xl transition-shadow",
+                t.type === "success" && "border-ink-300",
+                t.type === "error" && "border-red-300",
+                t.type === "info" && "border-ink-200"
+              )}
+              onClick={() => remove(t.id)}
+            >
+              <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-ink-900" />
+              <span className="text-ink-800">{t.message}</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
