@@ -16,6 +16,7 @@ import type {
   AgentEvent,
 } from "../types/ai.js";
 import type { AIService } from "./ai.service.js";
+import { MockAIService } from "./ai.service.js";
 import { logger } from "../utils/logger.js";
 
 const SDK_OPTIONS: Options = {
@@ -235,6 +236,5 @@ export function createAIService(): AIService {
     return new ClaudeAIService();
   }
   logger.info("Using MockAIService (no ANTHROPIC_API_KEY set)");
-  const { MockAIService } = require("./ai.service.js");
   return new MockAIService();
 }

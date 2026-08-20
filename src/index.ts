@@ -52,7 +52,7 @@ import { statsV2Routes } from "./api/routes/stats-v2.routes.js";
 import { metaRoutes } from "./api/routes/meta.routes.js";
 import { tagCloudRoutes } from "./api/routes/tag-cloud.routes.js";
 import { milestoneRoutes } from "./api/routes/milestone.routes.js";
-import { batchRoutes_v2 } from "./api/routes/batch-v2.routes.js";
+import { batchRoutes as batchRoutes_v2 } from "./api/routes/batch-v2.routes.js";
 import { savedViewsRoutes } from "./api/routes/saved-views.routes.js";
 import { archiveRoutes } from "./api/routes/archive.routes.js";
 import { shortcutRoutes } from "./api/routes/shortcut.routes.js";
