@@ -24,10 +24,26 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/dashboard/stats`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/dashboard`;
     fetch(url)
       .then((r) => r.json())
-      .then((d) => setStats(d.data ?? d))
+      .then((d) => {
+        const p = d.data ?? d;
+        if (!p || !p.stats) return;
+        setStats({
+          total: p.stats.total || 0,
+          pending: p.stats.pending || 0,
+          inProgress: p.stats.inProgress || 0,
+          completed: p.stats.completed || 0,
+          overdue: p.stats.overdue || 0,
+          completionRate: p.stats.total ? Math.round((p.stats.completed / p.stats.total) * 100) : 0,
+          recentCompletions: p.recentCompleted || [],
+          upcomingDeadlines: p.upcomingDue || [],
+          categoryBreakdown: Object.entries(p.categoryBreakdown || {}).map(([k, v]) => ({ category: k, count: v as number })),
+          priorityBreakdown: Object.entries(p.priorityBreakdown || {}).map(([k, v]) => ({ priority: k, count: v as number })),
+          aiInsights: [],
+        });
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);

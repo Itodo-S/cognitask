@@ -55,7 +55,7 @@ export function TodoForm({ open, onClose, parentId }: TodoFormProps) {
         description: description.trim() || undefined,
         priority,
         category: category || undefined,
-        dueDate: dueDate || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
         parentId,
       });
       toast("Task created");
