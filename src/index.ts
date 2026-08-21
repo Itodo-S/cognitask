@@ -69,7 +69,7 @@ const app = Fastify({
   bodyLimit: 1048576,
 });
 
-await app.register(cors, { origin: env.CORS_ORIGIN });
+await app.register(cors, { origin: env.CORS_ORIGIN, methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] });
 await app.register(sensible);
 await app.register(setupRateLimiter);
 

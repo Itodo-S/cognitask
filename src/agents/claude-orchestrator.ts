@@ -7,13 +7,23 @@ import { wsGateway } from "../ws/gateway.js";
 import { logger } from "../utils/logger.js";
 
 async function directMessage(prompt: string, system?: string): Promise<string> {
-  const model = env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const model = env.ANTHROPIC_MODEL ?? env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
+  const baseUrl = env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com";
+  const url = baseUrl.endsWith("/") ? `${baseUrl}v1/messages` : `${baseUrl}/v1/messages`;
+  const apiKey = env.ANTHROPIC_AUTH_TOKEN ?? env.ANTHROPIC_API_KEY ?? "";
+
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": env.ANTHROPIC_API_KEY ?? "",
+      "x-api-key": apiKey,
+      "Authorization": `Bearer ${apiKey}`,
       "anthropic-version": "2023-06-01",
+      "User-Agent": "claude-cli/1.0.108 (external, cli)",
+      "X-Stainless-Arch": "x64",
+      "X-Stainless-Lang": "js",
+      "X-Stainless-OS": "Linux",
+      "anthropic-beta": "interleaved-thinking-2025-05-14,redact-thinking-2026-02-12,context-management-2025-06-27,prompt-caching-scope-2026-01"
     },
     body: JSON.stringify({
       model,
@@ -21,7 +31,7 @@ async function directMessage(prompt: string, system?: string): Promise<string> {
       ...(system ? { system } : {}),
       messages: [{ role: "user", content: prompt }],
     }),
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(120_000),
   });
 
   if (!res.ok) {

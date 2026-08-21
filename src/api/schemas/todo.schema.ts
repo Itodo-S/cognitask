@@ -5,8 +5,16 @@ export const createTodoSchema = z.object({
   title: z.string().min(1).max(500),
   description: z.string().max(5000).optional(),
   status: z.enum(TODO_STATUSES).optional().default("pending"),
-  priority: z.enum(TODO_PRIORITIES).optional().default("medium"),
-  category: z.enum(TODO_CATEGORIES).optional(),
+  priority: z.any().optional().transform((val) => {
+    if (typeof val !== "string") return "medium";
+    const lower = val.toLowerCase();
+    return (TODO_PRIORITIES as readonly string[]).includes(lower) ? lower : "medium";
+  }),
+  category: z.any().optional().transform((val) => {
+    if (typeof val !== "string" || !val.trim()) return undefined;
+    const lower = val.toLowerCase();
+    return (TODO_CATEGORIES as readonly string[]).includes(lower) ? lower : "other";
+  }),
   dueDate: z.string().datetime().optional(),
   parentId: z.string().optional(),
   tags: z.array(z.string()).optional(),
