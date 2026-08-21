@@ -1,6 +1,4 @@
-import { query, type Options } from "@anthropic-ai/claude-agent-sdk";
 import { env } from "../config/env.js";
-import { cognitaskMcpServer } from "../agents/sdk-tools.js";
 import type {
   DecomposeRequest,
   DecomposeResult,
@@ -19,7 +17,6 @@ import type { AIService } from "./ai.service.js";
 import { MockAIService } from "./ai.service.js";
 import { logger } from "../utils/logger.js";
 
-// ── Direct Anthropic Messages API (fast, 2-5s) ─────────────
 async function directMessage(prompt: string, system?: string): Promise<string> {
   const model = env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
 
@@ -49,24 +46,12 @@ async function directMessage(prompt: string, system?: string): Promise<string> {
   return block?.text ?? "";
 }
 
-// ── SDK options (only for chat with MCP tools) ──────────────
-export const SDK_OPTIONS: Options = {
-  mcpServers: { cognitask: cognitaskMcpServer },
-  allowedTools: ["mcp__cognitask__*"],
-  permissionMode: (env.CLAUDE_PERMISSION_MODE ?? "bypassPermissions") as Options["permissionMode"],
-  allowDangerouslySkipPermissions: true,
-  maxTurns: env.CLAUDE_MAX_TURNS,
-  model: env.CLAUDE_MODEL,
-  cwd: env.CLAUDE_CWD,
-};
 
-export { query as sdkQuery };
 
-// ── Shared JSON parser ──────────────────────────────────────
 function parseJSON(text: string): any {
   const jsonMatch = text.match(/\{[\s\S]*\}/) || text.match(/\[[\s\S]*\]/);
   if (jsonMatch) {
-    try { return JSON.parse(jsonMatch[0]); } catch { /* fall through */ }
+    try { return JSON.parse(jsonMatch[0]); } catch {  }
   }
   try { return JSON.parse(text); } catch { return {}; }
 }
@@ -90,7 +75,6 @@ function parseDecomposedTodos(text: string, goal: string): DecomposedTodo[] {
   }];
 }
 
-// ── ClaudeAIService (direct API for speed) ──────────────────
 export class ClaudeAIService implements AIService {
   async *decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult> {
     yield { type: "thinking", data: { message: "Analyzing goal..." } };

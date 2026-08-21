@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { success } from "../../utils/helpers.js";
 
 export async function metaRoutes(app: FastifyInstance) {
-  // GET /api/meta/limits — API limits and quotas
+  
   app.get("/api/meta/limits", async (_request, reply) => {
     return reply.send(
       success({
@@ -21,7 +21,7 @@ export async function metaRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/meta/version — version info
+  
   app.get("/api/meta/version", async (_request, reply) => {
     return reply.send(
       success({

@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function automationRoutes(app: FastifyInstance) {
-  // Store automations in user_preferences
+  
 
-  // GET /api/automations — list all automations
+  
   app.get("/api/automations", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function automationRoutes(app: FastifyInstance) {
     return reply.send(success(automations));
   });
 
-  // POST /api/automations — create automation
+  
   app.post("/api/automations", async (request, reply) => {
     const body = z
       .object({
@@ -53,7 +53,7 @@ export async function automationRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Automation created"));
   });
 
-  // PATCH /api/automations/:id/toggle — enable/disable
+  
   app.patch<{ Params: { id: string } }>("/api/automations/:id/toggle", async (request, reply) => {
     const key = `automation:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -67,7 +67,7 @@ export async function automationRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, enabled: data.enabled }, `Automation ${data.enabled ? "enabled" : "disabled"}`));
   });
 
-  // DELETE /api/automations/:id — delete automation
+  
   app.delete<{ Params: { id: string } }>("/api/automations/:id", async (request, reply) => {
     const key = `automation:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

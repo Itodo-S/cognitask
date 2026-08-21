@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function searchRoutes(app: FastifyInstance) {
-  // GET /api/search — advanced search across all todos
+  
   app.get("/api/search", async (request, reply) => {
     const query = request.query as {
       q?: string;
@@ -52,7 +52,7 @@ export async function searchRoutes(app: FastifyInstance) {
       todos = await db.select().from(schema.todos).limit(limit);
     }
 
-    // Filter by tag if specified
+    
     if (query.tag) {
       const tagTodos = await db
         .select({ todoId: schema.todoTags.todoId })

@@ -5,7 +5,7 @@ import { success } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function preferencesRoutes(app: FastifyInstance) {
-  // GET /api/preferences — list all preferences
+  
   app.get("/api/preferences", async (_request, reply) => {
     const prefs = await db.select().from(schema.userPreferences);
     const result: Record<string, unknown> = {};
@@ -19,7 +19,7 @@ export async function preferencesRoutes(app: FastifyInstance) {
     return reply.send(success(result));
   });
 
-  // GET /api/preferences/:key — get single preference
+  
   app.get<{ Params: { key: string } }>("/api/preferences/:key", async (request, reply) => {
     const [pref] = await db
       .select()
@@ -36,7 +36,7 @@ export async function preferencesRoutes(app: FastifyInstance) {
     return reply.send(success({ key: pref.key, value }));
   });
 
-  // PUT /api/preferences/:key — set preference
+  
   app.put<{ Params: { key: string } }>("/api/preferences/:key", async (request, reply) => {
     const body = z.object({ value: z.unknown() }).parse(request.body);
     const key = request.params.key;
@@ -56,13 +56,13 @@ export async function preferencesRoutes(app: FastifyInstance) {
     return reply.send(success({ key, value: body.value }, "Preference saved"));
   });
 
-  // DELETE /api/preferences/:key — delete preference
+  
   app.delete<{ Params: { key: string } }>("/api/preferences/:key", async (request, reply) => {
     await db.delete(schema.userPreferences).where(eq(schema.userPreferences.key, request.params.key));
     return reply.send(success(null, "Preference deleted"));
   });
 
-  // PUT /api/preferences — bulk set preferences
+  
   app.put("/api/preferences", async (request, reply) => {
     const body = z.record(z.unknown()).parse(request.body);
 

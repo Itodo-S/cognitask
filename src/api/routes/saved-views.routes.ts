@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function savedViewsRoutes(app: FastifyInstance) {
-  // Saved views stored in user_preferences
+  
 
-  // GET /api/views — list all saved views
+  
   app.get("/api/views", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function savedViewsRoutes(app: FastifyInstance) {
     return reply.send(success(views));
   });
 
-  // POST /api/views — save a view
+  
   app.post("/api/views", async (request, reply) => {
     const body = z
       .object({
@@ -44,7 +44,7 @@ export async function savedViewsRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "View saved"));
   });
 
-  // DELETE /api/views/:id — delete saved view
+  
   app.delete<{ Params: { id: string } }>("/api/views/:id", async (request, reply) => {
     const key = `view:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

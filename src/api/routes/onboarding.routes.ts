@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { success } from "../../utils/helpers.js";
 
 export async function onboardingRoutes(app: FastifyInstance) {
-  // GET /api/onboarding/checklist — onboarding progress
+  
   app.get("/api/onboarding/checklist", async (_request, reply) => {
     return reply.send(
       success({
@@ -23,14 +23,14 @@ export async function onboardingRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/onboarding/complete-step — mark step complete
+  
   app.post("/api/onboarding/complete-step", async (request, reply) => {
     const { z } = await import("zod");
     const body = z.object({ stepId: z.string() }).parse(request.body);
     return reply.send(success({ stepId: body.stepId, completed: true }, "Step marked complete"));
   });
 
-  // GET /api/onboarding/tips — getting started tips
+  
   app.get("/api/onboarding/tips", async (_request, reply) => {
     return reply.send(
       success([

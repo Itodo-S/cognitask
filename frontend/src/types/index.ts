@@ -77,7 +77,6 @@ export interface DashboardStats {
   aiInsights: string[];
 }
 
-// ── AI Types ────────────────────────────────────────────────
 export interface AiChatMessage {
   role: "user" | "assistant";
   content: string;

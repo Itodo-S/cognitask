@@ -3,7 +3,7 @@ import { todoService } from "../../services/todo.service.js";
 import { success } from "../../utils/helpers.js";
 
 export async function batchRoutes(app: FastifyInstance) {
-  // POST /api/batch/duplicate — batch duplicate
+  
   app.post("/api/batch/duplicate", async (request, reply) => {
     const { z } = await import("zod");
     const body = z
@@ -29,7 +29,7 @@ export async function batchRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ duplicates, count: duplicates.length }));
   });
 
-  // POST /api/batch/move — batch move to parent
+  
   app.post("/api/batch/move", async (request, reply) => {
     const { z } = await import("zod");
     const body = z
@@ -48,7 +48,7 @@ export async function batchRoutes(app: FastifyInstance) {
     return reply.send(success({ moved: results.length }));
   });
 
-  // POST /api/batch/tag — batch add tag
+  
   app.post("/api/batch/tag", async (request, reply) => {
     const { z } = await import("zod");
     const body = z

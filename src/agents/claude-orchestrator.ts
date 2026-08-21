@@ -6,7 +6,6 @@ import { sessionService } from "../services/session.service.js";
 import { wsGateway } from "../ws/gateway.js";
 import { logger } from "../utils/logger.js";
 
-// Direct Anthropic API for fast chat (no MCP overhead)
 async function directMessage(prompt: string, system?: string): Promise<string> {
   const model = env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
   const res = await fetch("https://api.anthropic.com/v1/messages", {

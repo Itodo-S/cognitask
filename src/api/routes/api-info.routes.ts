@@ -4,7 +4,7 @@ import { env } from "../../config/env.js";
 import { logger } from "../../utils/logger.js";
 
 export async function apiInfoRoutes(app: FastifyInstance) {
-  // GET /api — API info and available endpoints
+  
   app.get("/api", async (_request, reply) => {
     return reply.send(
       success({

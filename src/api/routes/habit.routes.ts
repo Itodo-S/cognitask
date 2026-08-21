@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function habitRoutes(app: FastifyInstance) {
-  // Habits are stored in user_preferences
+  
 
-  // GET /api/habits — list all habits
+  
   app.get("/api/habits", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function habitRoutes(app: FastifyInstance) {
     return reply.send(success(habits));
   });
 
-  // POST /api/habits — create habit
+  
   app.post("/api/habits", async (request, reply) => {
     const body = z
       .object({
@@ -49,7 +49,7 @@ export async function habitRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Habit created"));
   });
 
-  // POST /api/habits/:id/complete — mark habit complete for today
+  
   app.post<{ Params: { id: string } }>("/api/habits/:id/complete", async (request, reply) => {
     const key = `habit:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -66,7 +66,7 @@ export async function habitRoutes(app: FastifyInstance) {
     completions.push(today);
     data.completions = completions;
 
-    // Calculate streak
+    
     let streak = 0;
     const sortedCompletions = [...completions].sort().reverse();
     const checkDate = new Date();
@@ -87,7 +87,7 @@ export async function habitRoutes(app: FastifyInstance) {
     return reply.send(success(data, "Habit completed for today!"));
   });
 
-  // GET /api/habits/:id/streak — get streak info
+  
   app.get<{ Params: { id: string } }>("/api/habits/:id/streak", async (request, reply) => {
     const key = `habit:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -105,7 +105,7 @@ export async function habitRoutes(app: FastifyInstance) {
     );
   });
 
-  // DELETE /api/habits/:id — delete habit
+  
   app.delete<{ Params: { id: string } }>("/api/habits/:id", async (request, reply) => {
     const key = `habit:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

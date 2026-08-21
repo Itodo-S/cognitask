@@ -4,7 +4,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function templateRoutes(app: FastifyInstance) {
-  // Predefined task templates
+  
   const templates = [
     {
       id: "daily-standup",
@@ -52,19 +52,19 @@ export async function templateRoutes(app: FastifyInstance) {
     },
   ];
 
-  // GET /api/templates — list all templates
+  
   app.get("/api/templates", async (_request, reply) => {
     return reply.send(success(templates));
   });
 
-  // GET /api/templates/:id — get single template
+  
   app.get<{ Params: { id: string } }>("/api/templates/:id", async (request, reply) => {
     const template = templates.find((t) => t.id === request.params.id);
     if (!template) return reply.code(404).send(error("Template not found"));
     return reply.send(success(template));
   });
 
-  // POST /api/templates/:id/apply — create todos from template
+  
   app.post<{ Params: { id: string } }>("/api/templates/:id/apply", async (request, reply) => {
     const template = templates.find((t) => t.id === request.params.id);
     if (!template) return reply.code(404).send(error("Template not found"));

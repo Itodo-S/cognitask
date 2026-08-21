@@ -4,7 +4,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function dragDropRoutes(app: FastifyInstance) {
-  // POST /api/todos/reorder — reorder todos
+  
   app.post("/api/todos/reorder", async (request, reply) => {
     const body = z
       .object({
@@ -13,7 +13,7 @@ export async function dragDropRoutes(app: FastifyInstance) {
       })
       .parse(request.body);
 
-    // Reorder by updating timestamps to maintain order
+    
     for (let i = 0; i < body.todoIds.length; i++) {
       const timestamp = new Date(Date.now() + i).toISOString();
       await todoService.update(body.todoIds[i], {
@@ -24,7 +24,7 @@ export async function dragDropRoutes(app: FastifyInstance) {
     return reply.send(success({ reordered: body.todoIds.length }, "Todos reordered"));
   });
 
-  // POST /api/todos/:id/move-to — move todo to different parent
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/move-to", async (request, reply) => {
     const body = z
       .object({
@@ -36,7 +36,7 @@ export async function dragDropRoutes(app: FastifyInstance) {
     const todo = await todoService.findById(request.params.id);
     if (!todo) return reply.code(404).send(error("Todo not found"));
 
-    // Prevent circular references
+    
     if (body.newParentId) {
       let current = await todoService.findById(body.newParentId);
       while (current?.parentId) {

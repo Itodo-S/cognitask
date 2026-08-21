@@ -50,11 +50,11 @@ export default function CalendarPage() {
       <Header title="Calendar" subtitle="View tasks by due date" />
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Calendar grid */}
+        {}
         <div className="lg:col-span-2">
           <Card>
             <CardContent>
-              {/* Month nav */}
+              {}
               <div className="flex items-center justify-between mb-4">
                 <Button variant="ghost" size="sm" onClick={prevMonth}>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M9 3L5 7l4 4"/></svg>
@@ -67,7 +67,7 @@ export default function CalendarPage() {
                 </Button>
               </div>
 
-              {/* Day headers */}
+              {}
               <div className="grid grid-cols-7 mb-2">
                 {DAYS.map((d) => (
                   <div key={d} className="text-center font-sans text-[11px] font-medium text-ink-400 uppercase py-2">
@@ -76,7 +76,7 @@ export default function CalendarPage() {
                 ))}
               </div>
 
-              {/* Days grid */}
+              {}
               <div className="grid grid-cols-7 gap-px bg-ink-200/30 rounded-lg overflow-hidden">
                 {Array.from({ length: firstDay }).map((_, i) => (
                   <div key={`empty-${i}`} className="bg-paper-50 min-h-[72px] sm:min-h-[88px]" />
@@ -129,7 +129,7 @@ export default function CalendarPage() {
           </Card>
         </div>
 
-        {/* Selected day details */}
+        {}
         <div>
           <Card>
             <CardContent>

@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function milestoneRoutes(app: FastifyInstance) {
-  // GET /api/milestones — list all milestones across todos
+  
   app.get("/api/milestones", async (_request, reply) => {
     const todos = await db.select().from(schema.todos);
     const milestones: Array<{
@@ -31,7 +31,7 @@ export async function milestoneRoutes(app: FastifyInstance) {
     return reply.send(success(milestones));
   });
 
-  // POST /api/todos/:id/milestone — mark as milestone
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/milestone", async (request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const todo = await todoService.findById(request.params.id);

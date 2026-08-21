@@ -45,7 +45,7 @@ export function AiDecompose() {
           category: t.category,
         });
         added++;
-      } catch { /* skip */ }
+      } catch {  }
     }
     toast(`Added ${added} tasks`);
     setTasks([]);

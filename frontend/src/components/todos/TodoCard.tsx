@@ -7,8 +7,8 @@ import type { Todo, TodoPriority } from "@/types";
 import { useTodoStore } from "@/stores/todoStore";
 import { useToast } from "@/components/ui/Toast";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { Button } from "@/components/ui/Button";
-import { Input, Textarea } from "@/components/ui/Input";
+import { TodoCardEditForm } from "./TodoCardEditForm";
+import { TodoCardActions } from "./TodoCardActions";
 
 const priorityConfig: Record<TodoPriority, { label: string; dot: string; bg: string }> = {
   urgent: { label: "Urgent", dot: "bg-red-500", bg: "bg-red-50 text-red-700 border-red-200" },
@@ -24,12 +24,10 @@ interface TodoCardProps {
 
 export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
   const [editing, setEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(todo.title);
-  const [editDesc, setEditDesc] = useState(todo.description ?? "");
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
-  const { updateStatus, updateTodo, deleteTodo } = useTodoStore();
+  const { updateStatus } = useTodoStore();
   const { toast } = useToast();
   const pConfig = priorityConfig[todo.priority] ?? priorityConfig.medium;
 
@@ -37,17 +35,6 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
     const next = todo.status === "completed" ? "pending" : "completed";
     await updateStatus(todo.id, next);
     toast(next === "completed" ? "Task completed!" : "Task reopened");
-  };
-
-  const handleSave = async () => {
-    await updateTodo(todo.id, { title: editTitle, description: editDesc });
-    setEditing(false);
-    toast("Task updated");
-  };
-
-  const handleDelete = async () => {
-    await deleteTodo(todo.id);
-    toast("Task archived");
   };
 
   return (
@@ -70,7 +57,7 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
         )}
       >
         <div className="flex items-start gap-3">
-          {/* Checkbox */}
+          {}
           <button
             onClick={handleToggle}
             className={clsx(
@@ -111,28 +98,7 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
           {/* Content */}
           <div className="flex-1 min-w-0">
             {editing ? (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-2"
-              >
-                <Input
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  autoFocus
-                />
-                <Textarea
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  placeholder="Add a description..."
-                  rows={2}
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleSave}>Save</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
-                </div>
-              </motion.div>
+              <TodoCardEditForm todo={todo} onClose={() => setEditing(false)} />
             ) : (
               <>
                 <div className="flex items-center gap-2">
@@ -203,53 +169,11 @@ export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
           </div>
 
           {/* Actions */}
-          {!editing && (
-            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-              {todo.status !== "completed" && (
-                <Tooltip content={todo.status === "in_progress" ? "Pause" : "Start"} side="top">
-                  <button
-                    onClick={() => {
-                      const next = todo.status === "in_progress" ? "pending" : "in_progress";
-                      updateStatus(todo.id, next);
-                      toast(next === "in_progress" ? "Task started" : "Task paused");
-                    }}
-                    className="w-7 h-7 flex items-center justify-center rounded text-ink-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  >
-                    {todo.status === "in_progress" ? (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                        <rect x="3" y="3" width="3" height="8" />
-                        <rect x="8" y="3" width="3" height="8" />
-                      </svg>
-                    ) : (
-                      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                        <path d="M4 2.5v9l7-4.5-7-4.5z" />
-                      </svg>
-                    )}
-                  </button>
-                </Tooltip>
-              )}
-              <Tooltip content="Edit" side="top">
-                <button
-                  onClick={() => setEditing(true)}
-                  className="w-7 h-7 flex items-center justify-center rounded text-ink-400 hover:text-ink-700 hover:bg-ink-100 transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M8.5 2.5l3 3M1.5 9.5l6-6 3 3-6 6H1.5v-3z"/></svg>
-                </button>
-              </Tooltip>
-              <Tooltip content="Archive" side="top">
-                <button
-                  onClick={handleDelete}
-                  className="w-7 h-7 flex items-center justify-center rounded text-ink-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 4h10M5 4V2.5h4V4M3 4v7.5a1 1 0 001 1h6a1 1 0 001-1V4"/></svg>
-                </button>
-              </Tooltip>
-            </div>
-          )}
+          {!editing && <TodoCardActions todo={todo} onEdit={() => setEditing(true)} />}
         </div>
       </div>
 
-      {/* Subtasks */}
+      {}
       <AnimatePresence>
         {showSubtasks && todo.subtasks && (
           <motion.div

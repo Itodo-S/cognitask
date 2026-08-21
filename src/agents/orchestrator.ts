@@ -3,28 +3,10 @@ import type { DecomposeRequest, DecomposeResult } from "../types/ai.js";
 import { todoService } from "../services/todo.service.js";
 import { aiService } from "../services/ai.service.js";
 
-/**
- * AgentOrchestrator — routes requests to the correct AI service methods
- * and integrates with todo data.
- *
- * ──────────────────────────────────────────────────────────────────────
- *  WHEN YOU ADD THE CLAUDE AGENT SDK:
- *
- *  The orchestrator becomes the main entry point for AI operations:
- *
- *  1. Import { query } from "@anthropic-ai/claude-agent-sdk"
- *  2. Replace this.ai.decompose() with query() calls
- *  3. Pass MCP tools from mcp-server.ts to the query options
- *  4. Stream results back via WebSocket events
- * ──────────────────────────────────────────────────────────────────────
- */
 export class AgentOrchestrator {
   constructor(private ai: AIService) {}
 
-  /**
-   * Decompose a high-level goal into actionable tasks.
-   * Optionally saves the generated tasks to the database.
-   */
+  
   async decomposeGoal(
     request: DecomposeRequest,
     autoSave = false
@@ -68,9 +50,7 @@ export class AgentOrchestrator {
     return { todos: result.todos, summary: result.summary, savedIds };
   }
 
-  /**
-   * Get smart suggestions based on current todo state.
-   */
+  
   async getSmartSuggestions(context?: string) {
     const { todos } = await todoService.findMany({ limit: 50 });
     const currentTodos = todos.map((t) => ({
@@ -82,9 +62,7 @@ export class AgentOrchestrator {
     return this.ai.suggest({ currentTodos, context });
   }
 
-  /**
-   * Auto-categorize a set of todos.
-   */
+  
   async autoCategorize(todoIds: string[]) {
     const results: Array<{ id: string; category: string; confidence: number }> = [];
 

@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// ─── notification preferences ─────────────────────────────────
 export const notificationPrefsSchema = z.object({
   enabled: z.boolean().optional().default(true),
   dueDateReminder: z.boolean().optional().default(true),
@@ -11,7 +10,6 @@ export const notificationPrefsSchema = z.object({
 
 export type NotificationPrefs = z.infer<typeof notificationPrefsSchema>;
 
-// ─── theme preferences ────────────────────────────────────────
 export const themePrefsSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).optional().default("system"),
   accentColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().default("#6366f1"),
@@ -21,7 +19,6 @@ export const themePrefsSchema = z.object({
 
 export type ThemePrefs = z.infer<typeof themePrefsSchema>;
 
-// ─── sorting preferences ──────────────────────────────────────
 export const sortingPrefsSchema = z.object({
   defaultSort: z.enum(["created", "updated", "priority", "dueDate", "title"]).optional().default("created"),
   defaultOrder: z.enum(["asc", "desc"]).optional().default("desc"),

@@ -3,9 +3,11 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
-import { Button } from "@/components/ui/Button";
+
 import { aiApi } from "@/lib/api";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { ChatMessage } from "./ChatMessage";
+import { AiChatInput } from "./AiChatInput";
 import type { AiChatMessage } from "@/types";
 
 export function AiChat() {
@@ -66,7 +68,7 @@ export function AiChat() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Session indicator */}
+      {}
       {sessionId && (
         <div className="px-4 py-1.5 border-b border-ink-200/40 flex items-center gap-2">
           <span className={clsx(
@@ -79,7 +81,7 @@ export function AiChat() {
         </div>
       )}
 
-      {/* Messages */}
+      {}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-4 scroll-smooth">
         {messages.length === 0 && (
           <motion.div
@@ -102,31 +104,7 @@ export function AiChat() {
 
         <AnimatePresence mode="popLayout">
           {messages.map((msg, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className={clsx("flex", msg.role === "user" ? "justify-end" : "justify-start")}
-            >
-              <div
-                className={clsx(
-                  "max-w-[80%] rounded-xl px-4 py-3",
-                  msg.role === "user"
-                    ? "bg-ink-900 text-paper-50"
-                    : "bg-paper-100 text-ink-800 border border-ink-200/60"
-                )}
-              >
-                <p className="font-sans text-sm whitespace-pre-wrap">{msg.content}</p>
-                <p className={clsx(
-                  "font-sans text-[10px] mt-1.5",
-                  msg.role === "user" ? "text-paper-300" : "text-ink-400"
-                )}>
-                  {msg.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-            </motion.div>
+            <ChatMessage key={i} msg={msg} />
           ))}
         </AnimatePresence>
 
@@ -161,26 +139,13 @@ export function AiChat() {
         )}
       </div>
 
-      {/* Input */}
-      <div className="border-t border-ink-200/40 px-4 py-3">
-        <div className="flex gap-2">
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder="Ask about your tasks..."
-            className="paper-input flex-1"
-            disabled={loading}
-          />
-          <Button onClick={send} disabled={!input.trim() || loading}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M13 1L6 8M13 1l-4 12-2-5-5-2z" />
-            </svg>
-          </Button>
-        </div>
-      </div>
+      <AiChatInput 
+        input={input} 
+        setInput={setInput} 
+        onSend={send} 
+        loading={loading} 
+        inputRef={inputRef} 
+      />
     </div>
   );
 }

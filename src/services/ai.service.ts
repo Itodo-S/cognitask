@@ -12,14 +12,6 @@ import type {
   AgentEvent,
 } from "../types/ai.js";
 
-/**
- * AIService — abstraction layer for Claude Agent SDK integration.
- *
- * When you add the SDK, implement each method using:
- *   import { query, tool, createSdkMcpServer } from "@anthropic-ai/claude-agent-sdk";
- *
- * For now, every method returns a plausible mock so the API is usable end-to-end.
- */
 export interface AIService {
   decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult>;
   categorize(request: CategorizeRequest): Promise<CategorizeResult>;
@@ -28,9 +20,6 @@ export interface AIService {
   estimate(request: EstimateRequest): Promise<EstimateResult>;
 }
 
-/**
- * Mock AI service — replace with real SDK calls.
- */
 export class MockAIService implements AIService {
   async *decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult> {
     yield { type: "thinking", data: { message: "Analyzing goal..." } };

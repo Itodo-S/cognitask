@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { CreateTodoInput } from "../../types/todo.js";
 
 export async function bulkRoutes(app: FastifyInstance) {
-  // POST /api/bulk/status — batch update status
+  
   app.post("/api/bulk/status", async (request, reply) => {
     const body = z
       .object({
@@ -23,7 +23,7 @@ export async function bulkRoutes(app: FastifyInstance) {
     return reply.send(success(results, `${results.length} todos updated`));
   });
 
-  // POST /api/bulk/priority — batch update priority
+  
   app.post("/api/bulk/priority", async (request, reply) => {
     const body = z
       .object({
@@ -41,7 +41,7 @@ export async function bulkRoutes(app: FastifyInstance) {
     return reply.send(success(results, `${results.length} todos priority updated`));
   });
 
-  // POST /api/bulk/delete — batch archive
+  
   app.post("/api/bulk/delete", async (request, reply) => {
     const body = z.object({ ids: z.array(z.string()).min(1).max(100) }).parse(request.body);
 
@@ -54,7 +54,7 @@ export async function bulkRoutes(app: FastifyInstance) {
     return reply.send(success({ deleted: count }, `${count} todos archived`));
   });
 
-  // POST /api/bulk/category — batch set category
+  
   app.post("/api/bulk/category", async (request, reply) => {
     const body = z
       .object({
@@ -72,7 +72,7 @@ export async function bulkRoutes(app: FastifyInstance) {
     return reply.send(success(results, `${results.length} todos categorized`));
   });
 
-  // POST /api/bulk/import — import todos from JSON
+  
   app.post("/api/bulk/import", async (request, reply) => {
     const body = z
       .object({
@@ -100,7 +100,7 @@ export async function bulkRoutes(app: FastifyInstance) {
     return reply.code(201).send(success(created, `${created.length} todos imported`));
   });
 
-  // GET /api/bulk/export — export all todos as JSON
+  
   app.get("/api/bulk/export", async (_request, reply) => {
     const { todos } = await todoService.findMany({ limit: 10000 });
     return reply.send(success({ todos, exportedAt: new Date().toISOString() }));

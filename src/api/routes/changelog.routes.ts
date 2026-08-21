@@ -4,9 +4,9 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function changelogRoutes(app: FastifyInstance) {
-  // Changelog stored in user_preferences
+  
 
-  // GET /api/changelog — list entries
+  
   app.get("/api/changelog", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -23,7 +23,7 @@ export async function changelogRoutes(app: FastifyInstance) {
     return reply.send(success(entries));
   });
 
-  // POST /api/changelog — add entry
+  
   app.post("/api/changelog", async (request, reply) => {
     const { z } = await import("zod");
     const body = z

@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function reportRoutes(app: FastifyInstance) {
-  // GET /api/reports/weekly — weekly summary report
+  
   app.get("/api/reports/weekly", async (request, reply) => {
     const query = request.query as { week?: string };
     const now = new Date();
@@ -64,7 +64,7 @@ export async function reportRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/reports/monthly — monthly summary
+  
   app.get("/api/reports/monthly", async (request, reply) => {
     const query = request.query as { year?: string; month?: string };
     const now = new Date();

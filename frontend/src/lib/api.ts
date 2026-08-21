@@ -28,7 +28,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return json.data ?? json;
 }
 
-// ── Todos ─────────────────────────────────────────────────────
 export const todosApi = {
   list: (filter?: TodoFilter) => {
     const params = new URLSearchParams();
@@ -60,7 +59,6 @@ export const todosApi = {
   stats: () => request<TodoStats>("/todos/stats"),
 };
 
-// ── AI ────────────────────────────────────────────────────────
 export const aiApi = {
   chat: (message: string, sessionId?: string) =>
     request<AiChatResponse>("/ai/chat", {
@@ -122,12 +120,10 @@ export const aiApi = {
     }),
 };
 
-// ── Dashboard ─────────────────────────────────────────────────
 export const dashboardApi = {
   get: () => request<DashboardData>("/dashboard"),
 };
 
-// ── Sessions ──────────────────────────────────────────────────
 export const sessionsApi = {
   list: () => request<Session[]>("/sessions"),
   get: (id: string) => request<Session>(`/sessions/${id}`),

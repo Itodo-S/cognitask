@@ -5,15 +5,15 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function queueRoutes(app: FastifyInstance) {
-  // A task queue for organizing work order
+  
 
-  // GET /api/queue — get current queue order
+  
   app.get("/api/queue", async (_request, reply) => {
     const todos = await db.select().from(schema.todos).where(
       sql`${schema.todos.status} = 'pending' OR ${schema.todos.status} = 'in_progress'`
     );
 
-    // Sort by aiMetadata order field, then by priority
+    
     const priorityWeight: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
     todos.sort((a, b) => {
       const metaA = a.aiMetadata ? JSON.parse(a.aiMetadata) : {};
@@ -27,7 +27,7 @@ export async function queueRoutes(app: FastifyInstance) {
     return reply.send(success({ queue: todos, count: todos.length }));
   });
 
-  // POST /api/queue/set — set queue order
+  
   app.post("/api/queue/set", async (request, reply) => {
     const body = z.object({ orderedIds: z.array(z.string()).min(1) }).parse(request.body);
 
@@ -48,7 +48,7 @@ export async function queueRoutes(app: FastifyInstance) {
     return reply.send(success({ count: body.orderedIds.length }, "Queue order updated"));
   });
 
-  // POST /api/queue/prioritize — move item to top of queue
+  
   app.post("/api/queue/prioritize", async (request, reply) => {
     const body = z.object({ todoId: z.string() }).parse(request.body);
 

@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function calendarRoutes(app: FastifyInstance) {
-  // GET /api/calendar/today — today's tasks
+  
   app.get("/api/calendar/today", async (_request, reply) => {
     const today = new Date().toISOString().split("T")[0];
 
@@ -19,7 +19,7 @@ export async function calendarRoutes(app: FastifyInstance) {
     return reply.send(success({ date: today, todos }));
   });
 
-  // GET /api/calendar/week — this week's tasks
+  
   app.get("/api/calendar/week", async (_request, reply) => {
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -39,7 +39,7 @@ export async function calendarRoutes(app: FastifyInstance) {
     return reply.send(success({ week: { start, end }, todos }));
   });
 
-  // GET /api/calendar/overdue — overdue tasks
+  
   app.get("/api/calendar/overdue", async (_request, reply) => {
     const now = new Date().toISOString();
 
@@ -54,7 +54,7 @@ export async function calendarRoutes(app: FastifyInstance) {
     return reply.send(success({ overdue: todos, count: todos.length }));
   });
 
-  // GET /api/calendar/month — month view (grouped by date)
+  
   app.get("/api/calendar/month", async (request, reply) => {
     const query = request.query as { year?: string; month?: string };
     const now = new Date();
@@ -70,7 +70,7 @@ export async function calendarRoutes(app: FastifyInstance) {
       .where(sql`${schema.todos.dueDate} >= ${startDate} AND ${schema.todos.dueDate} < ${endDate}`)
       .orderBy(sql`${schema.todos.dueDate} ASC`);
 
-    // Group by date
+    
     const grouped: Record<string, typeof todos> = {};
     for (const todo of todos) {
       const date = todo.dueDate?.split("T")[0] ?? "no-date";

@@ -39,7 +39,7 @@ export function useWebSocket(onEvent?: WsEventHandler) {
         try {
           const data: AiWsEvent = JSON.parse(event.data);
           handlersRef.current.forEach((handler) => handler(data.event, data.payload));
-        } catch { /* ignore malformed messages */ }
+        } catch {  }
       };
 
       ws.onclose = () => {

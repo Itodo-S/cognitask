@@ -61,7 +61,6 @@ export const userPreferences = sqliteTable("user_preferences", {
   value: text("value").notNull(),
 });
 
-// Relations
 export const todosRelations = relations(todos, ({ one, many }) => ({
   parent: one(todos, {
     fields: [todos.parentId],

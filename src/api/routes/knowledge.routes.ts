@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function knowledgeBaseRoutes(app: FastifyInstance) {
-  // Knowledge base items stored in user_preferences
+  
 
-  // GET /api/knowledge — list all items
+  
   app.get("/api/knowledge", async (request, reply) => {
     const query = request.query as { category?: string; search?: string };
     const prefs = await db
@@ -36,7 +36,7 @@ export async function knowledgeBaseRoutes(app: FastifyInstance) {
     return reply.send(success(items));
   });
 
-  // POST /api/knowledge — create item
+  
   app.post("/api/knowledge", async (request, reply) => {
     const body = z
       .object({
@@ -61,7 +61,7 @@ export async function knowledgeBaseRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Knowledge item created"));
   });
 
-  // PUT /api/knowledge/:id — update item
+  
   app.put<{ Params: { id: string } }>("/api/knowledge/:id", async (request, reply) => {
     const key = `kb:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -85,7 +85,7 @@ export async function knowledgeBaseRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, ...data }, "Knowledge item updated"));
   });
 
-  // DELETE /api/knowledge/:id — delete item
+  
   app.delete<{ Params: { id: string } }>("/api/knowledge/:id", async (request, reply) => {
     const key = `kb:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

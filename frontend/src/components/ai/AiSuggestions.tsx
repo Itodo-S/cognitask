@@ -54,7 +54,7 @@ export function AiSuggestions() {
           category: s.category,
         });
         added++;
-      } catch { /* skip */ }
+      } catch {  }
     }
     toast(`Added ${added} suggestions`);
     setSuggestions([]);

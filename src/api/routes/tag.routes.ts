@@ -5,13 +5,13 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function tagRoutes(app: FastifyInstance) {
-  // GET /api/tags — list all tags
+  
   app.get("/api/tags", async (_request, reply) => {
     const allTags = await db.select().from(schema.tags);
     return reply.send(success(allTags));
   });
 
-  // POST /api/tags — create tag
+  
   app.post("/api/tags", async (request, reply) => {
     const body = z.object({ name: z.string().min(1).max(100) }).parse(request.body);
     const [existing] = await db.select().from(schema.tags).where(eq(schema.tags.name, body.name));
@@ -21,7 +21,7 @@ export async function tagRoutes(app: FastifyInstance) {
     return reply.code(201).send(success(tag, "Tag created"));
   });
 
-  // DELETE /api/tags/:id — delete tag
+  
   app.delete<{ Params: { id: string } }>("/api/tags/:id", async (request, reply) => {
     const [tag] = await db.select().from(schema.tags).where(eq(schema.tags.id, request.params.id));
     if (!tag) return reply.code(404).send(error("Tag not found"));
@@ -30,7 +30,7 @@ export async function tagRoutes(app: FastifyInstance) {
     return reply.send(success(null, "Tag deleted"));
   });
 
-  // POST /api/tags/:id/rename — rename tag
+  
   app.post<{ Params: { id: string } }>("/api/tags/:id/rename", async (request, reply) => {
     const body = z.object({ name: z.string().min(1).max(100) }).parse(request.body);
     const [tag] = await db.select().from(schema.tags).where(eq(schema.tags.id, request.params.id));

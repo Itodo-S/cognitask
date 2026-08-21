@@ -3,7 +3,7 @@ import { success } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function exportRoutes(app: FastifyInstance) {
-  // GET /api/export/markdown — export todos as markdown
+  
   app.get("/api/export/markdown", async (_request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const { todos } = await todoService.findMany({ limit: 10000 });
@@ -52,7 +52,7 @@ export async function exportRoutes(app: FastifyInstance) {
     return reply.send(md);
   });
 
-  // GET /api/export/csv — export todos as CSV
+  
   app.get("/api/export/csv", async (_request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const { todos } = await todoService.findMany({ limit: 10000 });

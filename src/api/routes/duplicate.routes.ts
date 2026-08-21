@@ -4,7 +4,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function duplicateRoutes(app: FastifyInstance) {
-  // POST /api/todos/:id/duplicate — clone a todo with subtasks
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/duplicate", async (request, reply) => {
     const body = z
       .object({
@@ -16,7 +16,7 @@ export async function duplicateRoutes(app: FastifyInstance) {
     const original = await todoService.findById(request.params.id);
     if (!original) return reply.code(404).send(error("Original todo not found"));
 
-    // Create the duplicated todo
+    
     const duplicate = await todoService.create({
       title: `${original.title}${body.titleSuffix}`,
       description: original.description ?? undefined,
@@ -25,7 +25,7 @@ export async function duplicateRoutes(app: FastifyInstance) {
       tags: original.tags?.map((t) => t.name),
     });
 
-    // Duplicate subtasks if requested
+    
     if (body.includeSubtasks && original.subtasks?.length) {
       for (const subtask of original.subtasks) {
         await todoService.create({
@@ -41,7 +41,7 @@ export async function duplicateRoutes(app: FastifyInstance) {
     return reply.code(201).send(success(duplicate, "Todo duplicated"));
   });
 
-  // POST /api/todos/:id/move — move todo to new parent
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/move", async (request, reply) => {
     const body = z
       .object({

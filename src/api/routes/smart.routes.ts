@@ -5,11 +5,11 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function smartRoutes(app: FastifyInstance) {
-  // POST /api/smart/quick-add — natural language task creation
+  
   app.post("/api/smart/quick-add", async (request, reply) => {
     const body = z.object({ text: z.string().min(1).max(1000) }).parse(request.body);
 
-    // AI categorize and prioritize the natural language input
+    
     const [category, priority] = await Promise.all([
       aiService.categorize({ title: body.text }),
       aiService.prioritize({ title: body.text }),
@@ -37,7 +37,7 @@ export async function smartRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/smart/daily-plan — generate today's plan
+  
   app.post("/api/smart/daily-plan", async (_request, reply) => {
     const { todos } = await todoService.findMany({ status: "pending", limit: 50 });
 
@@ -53,7 +53,7 @@ export async function smartRoutes(app: FastifyInstance) {
       })),
     });
 
-    // Sort by priority weight
+    
     const priorityWeight: Record<string, number> = { urgent: 4, high: 3, medium: 2, low: 1 };
     const sorted = [...todos].sort(
       (a, b) => (priorityWeight[b.priority] ?? 0) - (priorityWeight[a.priority] ?? 0)
@@ -68,7 +68,7 @@ export async function smartRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/smart/review — generate review of completed work
+  
   app.post("/api/smart/review", async (_request, reply) => {
     const { todos: completed } = await todoService.findMany({
       status: "completed",
@@ -84,7 +84,7 @@ export async function smartRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/smart/suggest-next — suggest what to work on next
+  
   app.post("/api/smart/suggest-next", async (_request, reply) => {
     const { todos } = await todoService.findMany({ limit: 50 });
     const pending = todos.filter((t) => t.status === "pending" || t.status === "in_progress");

@@ -24,7 +24,7 @@ export function TodoFilters() {
 
   return (
     <div className="flex flex-col sm:flex-row gap-3 mb-4">
-      {/* Search */}
+      {}
       <div className="relative flex-1">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
@@ -42,7 +42,7 @@ export function TodoFilters() {
         />
       </div>
 
-      {/* Status */}
+      {}
       <div className="flex gap-1 bg-paper-100 rounded-lg p-1 border border-ink-200/40">
         {statusFilters.map((s) => (
           <button
@@ -60,7 +60,7 @@ export function TodoFilters() {
         ))}
       </div>
 
-      {/* Priority */}
+      {}
       <select
         value={filter.priority ?? "all"}
         onChange={(e) => setFilter({ priority: e.target.value === "all" ? undefined : e.target.value as TodoPriority })}

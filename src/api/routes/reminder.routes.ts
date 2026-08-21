@@ -4,9 +4,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function reminderRoutes(app: FastifyInstance) {
-  // Store reminders in todo aiMetadata
+  
 
-  // POST /api/todos/:id/remind — set reminder
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/remind", async (request, reply) => {
     const body = z
       .object({
@@ -30,7 +30,7 @@ export async function reminderRoutes(app: FastifyInstance) {
     return reply.send(success({ todoId: request.params.id, reminders }, "Reminder set"));
   });
 
-  // GET /api/todos/:id/remind — get reminders
+  
   app.get<{ Params: { id: string } }>("/api/todos/:id/remind", async (request, reply) => {
     const todo = await todoService.findById(request.params.id);
     if (!todo) return reply.code(404).send(error("Todo not found"));
@@ -41,7 +41,7 @@ export async function reminderRoutes(app: FastifyInstance) {
     return reply.send(success({ todoId: request.params.id, reminders }));
   });
 
-  // DELETE /api/todos/:id/remind/:index — remove reminder
+  
   app.delete<{ Params: { id: string; index: string } }>(
     "/api/todos/:id/remind/:index",
     async (request, reply) => {

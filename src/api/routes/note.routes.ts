@@ -4,9 +4,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function noteRoutes(app: FastifyInstance) {
-  // Notes are stored in aiMetadata
+  
 
-  // POST /api/todos/:id/notes — add note
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/notes", async (request, reply) => {
     const body = z
       .object({
@@ -29,7 +29,7 @@ export async function noteRoutes(app: FastifyInstance) {
     return reply.send(success({ todoId: request.params.id, notes }, "Note added"));
   });
 
-  // GET /api/todos/:id/notes — get notes
+  
   app.get<{ Params: { id: string } }>("/api/todos/:id/notes", async (request, reply) => {
     const todo = await todoService.findById(request.params.id);
     if (!todo) return reply.code(404).send(error("Todo not found"));
@@ -40,7 +40,7 @@ export async function noteRoutes(app: FastifyInstance) {
     return reply.send(success({ todoId: request.params.id, notes }));
   });
 
-  // DELETE /api/todos/:id/notes/:index — delete note
+  
   app.delete<{ Params: { id: string; index: string } }>(
     "/api/todos/:id/notes/:index",
     async (request, reply) => {

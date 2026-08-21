@@ -59,7 +59,7 @@ export default function DashboardPage() {
     <div>
       <Header title="Dashboard" subtitle="Your task overview at a glance" />
 
-      {/* Stats */}
+      {}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
         {statCards.map((s) => (
           <Card key={s.label}>
@@ -73,9 +73,9 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Two columns */}
+      {}
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Upcoming Deadlines */}
+        {}
         <Card>
           <CardContent>
             <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Upcoming Deadlines</h2>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Completions */}
+        {}
         <Card>
           <CardContent>
             <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Recent Completions</h2>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* AI Insights */}
+      {}
       {stats.aiInsights.length > 0 && (
         <Card className="mt-6">
           <CardContent>

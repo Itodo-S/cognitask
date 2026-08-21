@@ -4,7 +4,7 @@ import { db } from "../../db/client.js";
 import { success } from "../../utils/helpers.js";
 
 export async function healthRoutes(app: FastifyInstance) {
-  // GET /api/health — basic health check
+  
   app.get("/api/health", async (_request, reply) => {
     return reply.send(
       success({
@@ -18,7 +18,7 @@ export async function healthRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/health/detailed — detailed health with DB check
+  
   app.get("/api/health/detailed", async (_request, reply) => {
     let dbStatus = "ok";
     let dbLatency = 0;

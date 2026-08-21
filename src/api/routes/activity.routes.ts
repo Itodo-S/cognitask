@@ -5,10 +5,10 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function activityRoutes(app: FastifyInstance) {
-  // Store activity in a simple JSON field on aiMetadata
-  // This is a lightweight activity log without a separate table
+  
+  
 
-  // POST /api/todos/:id/activity — log an activity
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/activity", async (request, reply) => {
     const body = z
       .object({
@@ -29,7 +29,7 @@ export async function activityRoutes(app: FastifyInstance) {
       timestamp: new Date().toISOString(),
     });
 
-    // Keep last 50 activities
+    
     if (activities.length > 50) {
       activities.splice(0, activities.length - 50);
     }
@@ -42,7 +42,7 @@ export async function activityRoutes(app: FastifyInstance) {
     return reply.send(success({ activity: activities[activities.length - 1] }, "Activity logged"));
   });
 
-  // GET /api/todos/:id/activity — get activity log
+  
   app.get<{ Params: { id: string } }>("/api/todos/:id/activity", async (request, reply) => {
     const query = request.query as { limit?: string };
     const limit = Number(query.limit) || 20;
@@ -57,7 +57,7 @@ export async function activityRoutes(app: FastifyInstance) {
     return reply.send(success(activities.slice(-limit)));
   });
 
-  // GET /api/activity/recent — global recent activity
+  
   app.get("/api/activity/recent", async (request, reply) => {
     const query = request.query as { limit?: string };
     const limit = Number(query.limit) || 50;

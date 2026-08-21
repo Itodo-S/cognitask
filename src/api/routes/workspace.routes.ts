@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function workspaceRoutes(app: FastifyInstance) {
-  // Workspaces are stored in user_preferences
+  
 
-  // GET /api/workspaces — list all workspaces
+  
   app.get("/api/workspaces", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function workspaceRoutes(app: FastifyInstance) {
     return reply.send(success(workspaces));
   });
 
-  // POST /api/workspaces — create workspace
+  
   app.post("/api/workspaces", async (request, reply) => {
     const body = z
       .object({
@@ -46,7 +46,7 @@ export async function workspaceRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Workspace created"));
   });
 
-  // POST /api/workspaces/:id/todos — add todos to workspace
+  
   app.post<{ Params: { id: string } }>("/api/workspaces/:id/todos", async (request, reply) => {
     const body = z.object({ todoIds: z.array(z.string()).min(1) }).parse(request.body);
     const key = `workspace:${request.params.id}`;
@@ -63,7 +63,7 @@ export async function workspaceRoutes(app: FastifyInstance) {
     return reply.send(success(data, "Todos added to workspace"));
   });
 
-  // DELETE /api/workspaces/:id — delete workspace
+  
   app.delete<{ Params: { id: string } }>("/api/workspaces/:id", async (request, reply) => {
     const key = `workspace:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

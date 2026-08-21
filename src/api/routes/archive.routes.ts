@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function archiveRoutes(app: FastifyInstance) {
-  // GET /api/archive — list archived todos
+  
   app.get("/api/archive", async (request, reply) => {
     const query = request.query as { limit?: string; offset?: string };
     const limit = Number(query.limit) || 50;
@@ -20,7 +20,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     return reply.send(success({ todos: archived, count: archived.length }));
   });
 
-  // POST /api/archive/:id/restore — restore archived todo
+  
   app.post<{ Params: { id: string } }>("/api/archive/:id/restore", async (request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const todo = await todoService.findById(request.params.id);
@@ -30,7 +30,7 @@ export async function archiveRoutes(app: FastifyInstance) {
     return reply.send(success(updated, "Todo restored"));
   });
 
-  // DELETE /api/archive/empty — permanently delete all archived
+  
   app.delete("/api/archive/empty", async (_request, reply) => {
     const archived = await db
       .select({ id: schema.todos.id })

@@ -5,7 +5,7 @@ import { aiService } from "../../services/ai.service.js";
 import { success } from "../../utils/helpers.js";
 
 export async function sseRoutes(app: FastifyInstance) {
-  // GET /api/sse/todos — stream todo changes via SSE
+  
   app.get("/api/sse/todos", async (_request, reply) => {
     reply.raw.writeHead(200, {
       "Content-Type": "text/event-stream",
@@ -19,11 +19,11 @@ export async function sseRoutes(app: FastifyInstance) {
 
     sendEvent("connected", { message: "SSE connection established" });
 
-    // Send initial data
+    
     const { todos } = await todoService.findMany({ limit: 100 });
     sendEvent("initial", { todos });
 
-    // Keep alive
+    
     const interval = setInterval(() => {
       reply.raw.write(": keepalive\n\n");
     }, 30000);
@@ -33,7 +33,7 @@ export async function sseRoutes(app: FastifyInstance) {
     });
   });
 
-  // GET /api/sse/ai/decompose — stream AI decomposition via SSE
+  
   app.get("/api/sse/ai/decompose", async (request, reply) => {
     const query = request.query as { goal?: string };
     if (!query.goal) {

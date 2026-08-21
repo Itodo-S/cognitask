@@ -4,9 +4,9 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function journalRoutes(app: FastifyInstance) {
-  // Journal entries stored in user_preferences
+  
 
-  // GET /api/journal — list entries
+  
   app.get("/api/journal", async (request, reply) => {
     const query = request.query as { limit?: string };
     const limit = Number(query.limit) || 30;
@@ -27,7 +27,7 @@ export async function journalRoutes(app: FastifyInstance) {
     return reply.send(success(entries));
   });
 
-  // POST /api/journal — create entry
+  
   app.post("/api/journal", async (request, reply) => {
     const { z } = await import("zod");
     const body = z
@@ -51,7 +51,7 @@ export async function journalRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Journal entry created"));
   });
 
-  // GET /api/journal/:id — get single entry
+  
   app.get<{ Params: { id: string } }>("/api/journal/:id", async (request, reply) => {
     const key = `journal:${request.params.id}`;
     const prefs = await db
@@ -64,7 +64,7 @@ export async function journalRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, ...data }));
   });
 
-  // DELETE /api/journal/:id — delete entry
+  
   app.delete<{ Params: { id: string } }>("/api/journal/:id", async (request, reply) => {
     const { eq } = await import("drizzle-orm");
     const key = `journal:${request.params.id}`;

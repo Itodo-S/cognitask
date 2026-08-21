@@ -4,7 +4,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function focusRoutes(app: FastifyInstance) {
-  // POST /api/focus/start — start focus mode on a todo
+  
   app.post("/api/focus/start", async (request, reply) => {
     const body = z
       .object({
@@ -16,10 +16,10 @@ export async function focusRoutes(app: FastifyInstance) {
     const todo = await todoService.findById(body.todoId);
     if (!todo) return reply.code(404).send(error("Todo not found"));
 
-    // Mark as in_progress
+    
     await todoService.updateStatus(body.todoId, "in_progress");
 
-    // Log focus activity
+    
     const now = new Date();
     const endTime = new Date(now.getTime() + body.duration * 60 * 1000);
 
@@ -36,7 +36,7 @@ export async function focusRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/focus/complete — complete focus session
+  
   app.post("/api/focus/complete", async (request, reply) => {
     const body = z
       .object({

@@ -40,12 +40,12 @@ export async function wsRoutes(app: FastifyInstance): Promise<void> {
     socket.on("message", (raw: Buffer) => {
       try {
         const msg = JSON.parse(raw.toString()) as EventData;
-        // Handle incoming messages if needed
+        
         if (msg.event === "ping") {
           socket.send(JSON.stringify({ event: "pong", payload: {} }));
         }
       } catch {
-        // ignore malformed messages
+        
       }
     });
   });

@@ -5,7 +5,7 @@ import { success } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function insightsRoutes(app: FastifyInstance) {
-  // GET /api/insights/weekly — AI-powered weekly insights
+  
   app.get("/api/insights/weekly", async (_request, reply) => {
     const { todos: allTodos } = await todoService.findMany({ limit: 200 });
 
@@ -65,11 +65,11 @@ export async function insightsRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/insights/productivity — productivity patterns
+  
   app.get("/api/insights/productivity", async (_request, reply) => {
     const { todos } = await todoService.findMany({ limit: 500 });
 
-    // Analyze completion patterns
+    
     const completedByDay: Record<string, number> = {};
     const completedByHour: Record<number, number> = {};
 
@@ -82,7 +82,7 @@ export async function insightsRoutes(app: FastifyInstance) {
       }
     }
 
-    // Find peak productivity hour
+    
     let peakHour = 9;
     let peakCount = 0;
     for (const [hour, count] of Object.entries(completedByHour)) {
@@ -92,7 +92,7 @@ export async function insightsRoutes(app: FastifyInstance) {
       }
     }
 
-    // Calculate average tasks per day
+    
     const uniqueDays = Object.keys(completedByDay).length;
     const totalCompleted = Object.values(completedByDay).reduce((a, b) => a + b, 0);
     const avgPerDay = uniqueDays > 0 ? Math.round((totalCompleted / uniqueDays) * 10) / 10 : 0;

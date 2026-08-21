@@ -5,7 +5,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function dependencyRoutes(app: FastifyInstance) {
-  // POST /api/todos/:id/depends-on — add dependency
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/depends-on", async (request, reply) => {
     const body = z.object({ dependsOnId: z.string() }).parse(request.body);
     const todo = await db.select().from(schema.todos).where(eq(schema.todos.id, request.params.id));
@@ -14,7 +14,7 @@ export async function dependencyRoutes(app: FastifyInstance) {
     const dependency = await db.select().from(schema.todos).where(eq(schema.todos.id, body.dependsOnId));
     if (!dependency[0]) return reply.code(404).send(error("Dependency todo not found"));
 
-    // Store dependency in aiMetadata JSON
+    
     const currentMeta = todo[0].aiMetadata ? JSON.parse(todo[0].aiMetadata) : {};
     const dependencies: string[] = currentMeta.dependencies ?? [];
     if (!dependencies.includes(body.dependsOnId)) {
@@ -32,7 +32,7 @@ export async function dependencyRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, dependencies }, "Dependency added"));
   });
 
-  // GET /api/todos/:id/dependencies — get dependencies
+  
   app.get<{ Params: { id: string } }>("/api/todos/:id/dependencies", async (request, reply) => {
     const [todo] = await db.select().from(schema.todos).where(eq(schema.todos.id, request.params.id));
     if (!todo) return reply.code(404).send(error("Todo not found"));
@@ -49,7 +49,7 @@ export async function dependencyRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, dependencies: deps }));
   });
 
-  // DELETE /api/todos/:id/depends-on/:depId — remove dependency
+  
   app.delete<{ Params: { id: string; depId: string } }>(
     "/api/todos/:id/depends-on/:depId",
     async (request, reply) => {

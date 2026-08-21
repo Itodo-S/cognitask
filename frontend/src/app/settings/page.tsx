@@ -48,7 +48,7 @@ export default function SettingsPage() {
       <Header title="Settings" subtitle="Configure your CogniTask experience" />
 
       <div className="max-w-2xl space-y-6">
-        {/* Appearance */}
+        {}
         <Card>
           <CardContent>
             <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Appearance</h2>
@@ -74,7 +74,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* AI Configuration */}
+        {}
         <Card>
           <CardContent>
             <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">AI Assistant</h2>
@@ -110,7 +110,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Danger Zone */}
+        {}
         <Card>
           <CardContent>
             <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Danger Zone</h2>
@@ -125,7 +125,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        {/* Save */}
+        {}
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving}>
             {saving ? "Saving..." : "Save Settings"}

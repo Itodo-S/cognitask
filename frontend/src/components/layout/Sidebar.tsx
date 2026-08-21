@@ -63,7 +63,7 @@ export function Sidebar() {
 
   return (
     <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:bg-paper-50 lg:border-r lg:border-ink-200/60">
-      {/* Logo */}
+      {}
       <div className="flex items-center gap-3 px-6 py-5 border-b border-ink-200/40">
         <div className="w-8 h-8 bg-ink-900 rounded-lg flex items-center justify-center">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -76,7 +76,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
+      {}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {nav.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -99,7 +99,7 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
+      {}
       <div className="px-6 py-4 border-t border-ink-200/40">
         <p className="font-sans text-[10px] text-ink-400 text-center">
           v0.1.0 · Claude Agent SDK Ready

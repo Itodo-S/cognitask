@@ -207,7 +207,7 @@ export class TodoService {
     };
   }
 
-  // Tag helpers
+  
   private async syncTodoTags(todoId: string, tagNames: string[]): Promise<void> {
     await db.delete(schema.todoTags).where(eq(schema.todoTags.todoId, todoId));
 

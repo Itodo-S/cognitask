@@ -24,7 +24,7 @@ export default function AIPage() {
     <div className="flex flex-col h-[calc(100vh-2rem)]">
       <Header title="AI Assistant" subtitle="Chat with your task assistant" />
 
-      {/* Tabs */}
+      {}
       <div className="flex gap-1 mb-4 bg-ink-100/50 rounded-lg p-1">
         {tabs.map((tab) => (
           <Button
@@ -44,7 +44,7 @@ export default function AIPage() {
         ))}
       </div>
 
-      {/* Content */}
+      {}
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 overflow-y-auto">
           {activeTab === "chat" && <AiChat />}

@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function focusSessionRoutes(app: FastifyInstance) {
-  // Focus sessions stored in user_preferences
+  
 
-  // POST /api/focus-sessions — create session
+  
   app.post("/api/focus-sessions", async (request, reply) => {
     const body = z
       .object({
@@ -32,7 +32,7 @@ export async function focusSessionRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Focus session started"));
   });
 
-  // POST /api/focus-sessions/:id/complete — complete session
+  
   app.post<{ Params: { id: string } }>("/api/focus-sessions/:id/complete", async (request, reply) => {
     const key = `focus:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -48,7 +48,7 @@ export async function focusSessionRoutes(app: FastifyInstance) {
     return reply.send(success(data, "Focus session completed!"));
   });
 
-  // GET /api/focus-sessions/stats — get stats
+  
   app.get("/api/focus-sessions/stats", async (_request, reply) => {
     const prefs = await db
       .select()

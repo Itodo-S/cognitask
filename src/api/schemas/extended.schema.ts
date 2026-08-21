@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// ─── todo_reminder ────────────────────────────────────────────
 export const todoReminderSchema = z.object({
   todoId: z.string(),
   remindAt: z.string().datetime(),
@@ -9,7 +8,6 @@ export const todoReminderSchema = z.object({
 
 export type TodoReminderInput = z.infer<typeof todoReminderSchema>;
 
-// ─── duplicate_todo ───────────────────────────────────────────
 export const duplicateTodoSchema = z.object({
   id: z.string(),
   titleSuffix: z.string().optional().default(" (copy)"),
@@ -17,7 +15,6 @@ export const duplicateTodoSchema = z.object({
 
 export type DuplicateTodoInput = z.infer<typeof duplicateTodoSchema>;
 
-// ─── move_todo ────────────────────────────────────────────────
 export const moveTodoSchema = z.object({
   id: z.string(),
   newParentId: z.string().nullable(),
@@ -25,7 +22,6 @@ export const moveTodoSchema = z.object({
 
 export type MoveTodoInput = z.infer<typeof moveTodoSchema>;
 
-// ─── reorder_todos ────────────────────────────────────────────
 export const reorderTodosSchema = z.object({
   todoIds: z.array(z.string()).min(1),
 });

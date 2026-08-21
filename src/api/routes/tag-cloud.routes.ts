@@ -5,7 +5,7 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function tagCloudRoutes(app: FastifyInstance) {
-  // GET /api/tags/cloud — get tag usage counts
+  
   app.get("/api/tags/cloud", async (_request, reply) => {
     const allTags = await db.select().from(schema.tags);
     const tagCounts: Array<{ name: string; count: number; id: string }> = [];
@@ -23,7 +23,7 @@ export async function tagCloudRoutes(app: FastifyInstance) {
     return reply.send(success(tagCounts));
   });
 
-  // GET /api/tags/popular — get top 10 tags
+  
   app.get("/api/tags/popular", async (_request, reply) => {
     const allTags = await db.select().from(schema.tags);
     const tagCounts: Array<{ name: string; count: number }> = [];

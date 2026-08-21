@@ -4,9 +4,9 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function timeTrackingRoutes(app: FastifyInstance) {
-  // Time entries stored in aiMetadata
+  
 
-  // POST /api/todos/:id/time — start timer
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/time", async (request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const todo = await todoService.findById(request.params.id);
@@ -28,7 +28,7 @@ export async function timeTrackingRoutes(app: FastifyInstance) {
     );
   });
 
-  // POST /api/todos/:id/time/stop — stop timer
+  
   app.post<{ Params: { id: string } }>("/api/todos/:id/time/stop", async (request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const todo = await todoService.findById(request.params.id);
@@ -46,7 +46,7 @@ export async function timeTrackingRoutes(app: FastifyInstance) {
       Math.round((new Date(running.end).getTime() - new Date(running.start).getTime()) / 1000 / 60 * 10) / 10;
     meta.isTimerRunning = false;
 
-    // Calculate total time
+    
     const totalTime = timeEntries.reduce((sum, e) => sum + (e.duration ?? 0), 0);
     meta.totalTimeMinutes = Math.round(totalTime * 10) / 10;
 
@@ -59,7 +59,7 @@ export async function timeTrackingRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/todos/:id/time — get time entries
+  
   app.get<{ Params: { id: string } }>("/api/todos/:id/time", async (request, reply) => {
     const { todoService } = await import("../../services/todo.service.js");
     const todo = await todoService.findById(request.params.id);

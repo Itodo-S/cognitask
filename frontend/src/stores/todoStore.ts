@@ -45,7 +45,7 @@ export const useTodoStore = create<TodoStore>((set, get) => ({
       const stats = await todosApi.stats();
       set({ stats });
     } catch {
-      // ignore
+      
     }
   },
 

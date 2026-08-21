@@ -4,7 +4,7 @@ import { sql, eq, and } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function analyticsRoutes(app: FastifyInstance) {
-  // GET /api/analytics/overview — comprehensive overview
+  
   app.get("/api/analytics/overview", async (_request, reply) => {
     const allTodos = await db.select().from(schema.todos);
 
@@ -55,7 +55,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/analytics/productivity — productivity score
+  
   app.get("/api/analytics/productivity", async (_request, reply) => {
     const allTodos = await db.select().from(schema.todos);
 
@@ -92,7 +92,7 @@ export async function analyticsRoutes(app: FastifyInstance) {
     );
   });
 
-  // GET /api/analytics/timeline — tasks created vs completed over time
+  
   app.get("/api/analytics/timeline", async (request, reply) => {
     const query = request.query as { days?: string };
     const days = Number(query.days) || 30;

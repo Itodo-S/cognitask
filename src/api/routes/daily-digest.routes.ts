@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function dailyDigestRoutes(app: FastifyInstance) {
-  // GET /api/digest/today — today's digest
+  
   app.get("/api/digest/today", async (_request, reply) => {
     const today = new Date().toISOString().split("T")[0] ?? "";
     const allTodos = await db.select().from(schema.todos);

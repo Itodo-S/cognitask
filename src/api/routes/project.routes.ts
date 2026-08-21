@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function projectRoutes(app: FastifyInstance) {
-  // Projects are stored in user_preferences with a "project:" prefix
+  
 
-  // GET /api/projects — list all projects
+  
   app.get("/api/projects", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function projectRoutes(app: FastifyInstance) {
     return reply.send(success(projects));
   });
 
-  // POST /api/projects — create project
+  
   app.post("/api/projects", async (request, reply) => {
     const body = z
       .object({
@@ -50,7 +50,7 @@ export async function projectRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Project created"));
   });
 
-  // POST /api/projects/:id/todos — add todos to project
+  
   app.post<{ Params: { id: string } }>("/api/projects/:id/todos", async (request, reply) => {
     const body = z.object({ todoIds: z.array(z.string()).min(1) }).parse(request.body);
     const key = `project:${request.params.id}`;
@@ -67,7 +67,7 @@ export async function projectRoutes(app: FastifyInstance) {
     return reply.send(success(data, "Todos added to project"));
   });
 
-  // GET /api/projects/:id/todos — get project todos
+  
   app.get<{ Params: { id: string } }>("/api/projects/:id/todos", async (request, reply) => {
     const key = `project:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -85,7 +85,7 @@ export async function projectRoutes(app: FastifyInstance) {
     return reply.send(success({ project: { id: request.params.id, ...data }, todos }));
   });
 
-  // DELETE /api/projects/:id — delete project
+  
   app.delete<{ Params: { id: string } }>("/api/projects/:id", async (request, reply) => {
     const key = `project:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

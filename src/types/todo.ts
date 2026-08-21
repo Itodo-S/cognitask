@@ -1,4 +1,5 @@
 import type { TodoStatus, TodoPriority, TodoCategory } from "../config/constants.js";
+export type { TodoStatus, TodoPriority, TodoCategory };
 
 export interface Todo {
   id: string;

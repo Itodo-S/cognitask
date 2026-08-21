@@ -4,7 +4,7 @@ import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function dashboardRoutes(app: FastifyInstance) {
-  // GET /api/dashboard — full dashboard data
+  
   app.get("/api/dashboard", async (_request, reply) => {
     const allTodos = await db.select().from(schema.todos);
     const now = new Date();

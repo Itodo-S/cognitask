@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function shortcutRoutes(app: FastifyInstance) {
-  // Keyboard shortcuts stored in user_preferences
+  
 
-  // GET /api/shortcuts — list shortcuts
+  
   app.get("/api/shortcuts", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function shortcutRoutes(app: FastifyInstance) {
     return reply.send(success(shortcuts));
   });
 
-  // PUT /api/shortcuts — set shortcuts
+  
   app.put("/api/shortcuts", async (request, reply) => {
     const body = z
       .record(
@@ -49,7 +49,7 @@ export async function shortcutRoutes(app: FastifyInstance) {
     return reply.send(success(null, "Shortcuts updated"));
   });
 
-  // GET /api/shortcuts/defaults — get default shortcuts
+  
   app.get("/api/shortcuts/defaults", async (_request, reply) => {
     return reply.send(
       success({

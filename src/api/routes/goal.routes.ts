@@ -5,9 +5,9 @@ import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function goalRoutes(app: FastifyInstance) {
-  // Goals are stored in user_preferences
+  
 
-  // GET /api/goals — list all goals
+  
   app.get("/api/goals", async (_request, reply) => {
     const prefs = await db
       .select()
@@ -22,7 +22,7 @@ export async function goalRoutes(app: FastifyInstance) {
     return reply.send(success(goals));
   });
 
-  // POST /api/goals — create goal
+  
   app.post("/api/goals", async (request, reply) => {
     const body = z
       .object({
@@ -49,7 +49,7 @@ export async function goalRoutes(app: FastifyInstance) {
     return reply.code(201).send(success({ id, ...JSON.parse(value) }, "Goal created"));
   });
 
-  // PATCH /api/goals/:id — update goal
+  
   app.patch<{ Params: { id: string } }>("/api/goals/:id", async (request, reply) => {
     const key = `goal:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -77,7 +77,7 @@ export async function goalRoutes(app: FastifyInstance) {
     return reply.send(success({ id: request.params.id, ...data }, "Goal updated"));
   });
 
-  // POST /api/goals/:id/milestone — add milestone
+  
   app.post<{ Params: { id: string } }>("/api/goals/:id/milestone", async (request, reply) => {
     const key = `goal:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));
@@ -100,7 +100,7 @@ export async function goalRoutes(app: FastifyInstance) {
     };
     data.milestoneIds = [...(data.milestoneIds ?? []), milestone];
 
-    // Update progress based on completed milestones
+    
     const completedCount = data.milestoneIds.filter((m: any) => m.completed).length;
     data.progress = Math.round((completedCount / data.milestoneIds.length) * 100);
 
@@ -109,7 +109,7 @@ export async function goalRoutes(app: FastifyInstance) {
     return reply.send(success(data, "Milestone added"));
   });
 
-  // DELETE /api/goals/:id — delete goal
+  
   app.delete<{ Params: { id: string } }>("/api/goals/:id", async (request, reply) => {
     const key = `goal:${request.params.id}`;
     const [pref] = await db.select().from(schema.userPreferences).where(eq(schema.userPreferences.key, key));

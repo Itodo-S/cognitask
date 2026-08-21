@@ -69,20 +69,16 @@ const app = Fastify({
   bodyLimit: 1048576,
 });
 
-// ── Plugins ───────────────────────────────────────────────────
 await app.register(cors, { origin: env.CORS_ORIGIN });
 await app.register(sensible);
 await app.register(setupRateLimiter);
 
-// ── Middleware ─────────────────────────────────────────────────
 await app.register(requestId);
 await app.register(requestLogger);
 await app.register(securityHeaders);
 
-// ── WebSocket ─────────────────────────────────────────────────
 await app.register(wsRoutes);
 
-// ── Routes ────────────────────────────────────────────────────
 await app.register(todoRoutes);
 await app.register(aiRoutes);
 await app.register(sessionRoutes);
@@ -133,10 +129,8 @@ await app.register(shortcutRoutes);
 await app.register(dailyDigestRoutes);
 await app.register(onboardingRoutes);
 
-// ── Error handler ─────────────────────────────────────────────
 app.setErrorHandler(errorHandler);
 
-// ── Start ─────────────────────────────────────────────────────
 async function start() {
   try {
     await app.listen({ port: env.PORT, host: env.HOST });
