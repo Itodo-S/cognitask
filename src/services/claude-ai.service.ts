@@ -19,7 +19,37 @@ import type { AIService } from "./ai.service.js";
 import { MockAIService } from "./ai.service.js";
 import { logger } from "../utils/logger.js";
 
-// ── Shared SDK options ──────────────────────────────────────
+// ── Direct Anthropic Messages API (fast, 2-5s) ─────────────
+async function directMessage(prompt: string, system?: string): Promise<string> {
+  const model = env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY ?? "",
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1024,
+      ...(system ? { system } : {}),
+      messages: [{ role: "user", content: prompt }],
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Anthropic API ${res.status}: ${JSON.stringify(err)}`);
+  }
+
+  const data: any = await res.json();
+  const block = data.content?.find((b: any) => b.type === "text");
+  return block?.text ?? "";
+}
+
+// ── SDK options (only for chat with MCP tools) ──────────────
 export const SDK_OPTIONS: Options = {
   mcpServers: { cognitask: cognitaskMcpServer },
   allowedTools: ["mcp__cognitask__*"],
@@ -60,29 +90,7 @@ function parseDecomposedTodos(text: string, goal: string): DecomposedTodo[] {
   }];
 }
 
-// ── Collect SDK query result ─────────────────────────────────
-async function sdkQueryCollect(
-  prompt: string,
-  system: string,
-  maxTurns: number,
-): Promise<string> {
-  let result = "";
-  const messages = query({
-    prompt: `${system}\n\n${prompt}`,
-    options: {
-      ...SDK_OPTIONS,
-      maxTurns,
-    },
-  });
-  for await (const msg of messages) {
-    if (msg.type === "result" && msg.subtype === "success") {
-      result = msg.result ?? "";
-    }
-  }
-  return result;
-}
-
-// ── ClaudeAIService ─────────────────────────────────────────
+// ── ClaudeAIService (direct API for speed) ──────────────────
 export class ClaudeAIService implements AIService {
   async *decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult> {
     yield { type: "thinking", data: { message: "Analyzing goal..." } };
@@ -103,11 +111,7 @@ Create tasks in logical order. Make each task specific and actionable.`;
 
     let resultText = "";
     try {
-      resultText = await sdkQueryCollect(
-        prompt,
-        "You are a task decomposition expert. Return only valid JSON.",
-        1,
-      );
+      resultText = await directMessage(prompt, "You are a task decomposition expert. Return only valid JSON.");
     } catch (err) {
       logger.error("Claude decompose error", { error: String(err) });
       yield { type: "error", data: { message: String(err) } };
@@ -125,7 +129,7 @@ Create tasks in logical order. Make each task specific and actionable.`;
 
   async categorize(request: CategorizeRequest): Promise<CategorizeResult> {
     try {
-      const result = await sdkQueryCollect(
+      const result = await directMessage(
         `Categorize this task. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
@@ -134,8 +138,7 @@ ${request.description ? `Description: "${request.description}"` : ""}
 Categories: work, personal, health, finance, learning, creative, errands, social, other
 
 Format: {"category": "<category>", "confidence": <0.0-1.0>, "reasoning": "<brief>"}`,
-        "Return only valid JSON.",
-        1,
+        "Return only valid JSON."
       );
       const parsed = parseJSON(result);
       return {
@@ -151,7 +154,7 @@ Format: {"category": "<category>", "confidence": <0.0-1.0>, "reasoning": "<brief
 
   async prioritize(request: PrioritizeRequest): Promise<PrioritizeResult> {
     try {
-      const result = await sdkQueryCollect(
+      const result = await directMessage(
         `Prioritize this task. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
@@ -160,8 +163,7 @@ ${request.dueDate ? `Due: ${request.dueDate}` : ""}
 ${request.existingTodos?.length ? `Existing: ${JSON.stringify(request.existingTodos)}` : ""}
 
 Format: {"priority": "<low|medium|high|urgent>", "reasoning": "<brief>"}`,
-        "Return only valid JSON.",
-        1,
+        "Return only valid JSON."
       );
       const parsed = parseJSON(result);
       return {
@@ -180,15 +182,14 @@ Format: {"priority": "<low|medium|high|urgent>", "reasoning": "<brief>"}`,
       : "\nNo current tasks.";
 
     try {
-      const result = await sdkQueryCollect(
+      const result = await directMessage(
         `Based on current tasks, suggest 2-3 actionable next steps.
 ${todosContext}
 ${request.context ? `\nContext: ${request.context}` : ""}
 
 Reply with ONLY a valid JSON array.
 Each: {"title":"...","description":"...","priority":"low|medium|high","category":"...","reason":"..."}`,
-        "Return only a valid JSON array.",
-        1,
+        "Return only a valid JSON array."
       );
       const parsed = parseJSON(result);
       return Array.isArray(parsed) ? parsed : [parsed];
@@ -200,15 +201,14 @@ Each: {"title":"...","description":"...","priority":"low|medium|high","category"
 
   async estimate(request: EstimateRequest): Promise<EstimateResult> {
     try {
-      const result = await sdkQueryCollect(
+      const result = await directMessage(
         `Estimate time and complexity. Reply with ONLY valid JSON.
 
 Task: "${request.title}"
 ${request.description ? `Description: "${request.description}"` : ""}
 
 Format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|complex>", "reasoning": "<brief>"}`,
-        "Return only valid JSON.",
-        1,
+        "Return only valid JSON."
       );
       const parsed = parseJSON(result);
       return {
@@ -224,8 +224,8 @@ Format: {"estimatedMinutes": <number>, "complexity": "<simple|moderate|complex>"
 }
 
 export function createAIService(): AIService {
-  if (env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN) {
-    logger.info("Using ClaudeAIService (Anthropic SDK)");
+  if (env.ANTHROPIC_API_KEY) {
+    logger.info("Using ClaudeAIService (direct Anthropic API)");
     return new ClaudeAIService();
   }
   logger.info("Using MockAIService (no ANTHROPIC_API_KEY set)");

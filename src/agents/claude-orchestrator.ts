@@ -1,11 +1,39 @@
-import { sdkQuery, SDK_OPTIONS } from "../services/claude-ai.service.js";
-import { cognitaskMcpServer } from "./sdk-tools.js";
+import { env } from "../config/env.js";
 import type { AIService } from "../services/ai.service.js";
 import type { DecomposeRequest } from "../types/ai.js";
 import { todoService } from "../services/todo.service.js";
 import { sessionService } from "../services/session.service.js";
 import { wsGateway } from "../ws/gateway.js";
 import { logger } from "../utils/logger.js";
+
+// Direct Anthropic API for fast chat (no MCP overhead)
+async function directMessage(prompt: string, system?: string): Promise<string> {
+  const model = env.CLAUDE_MODEL ?? "claude-sonnet-4-20250514";
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": env.ANTHROPIC_API_KEY ?? "",
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1024,
+      ...(system ? { system } : {}),
+      messages: [{ role: "user", content: prompt }],
+    }),
+    signal: AbortSignal.timeout(30_000),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Anthropic API ${res.status}: ${JSON.stringify(err)}`);
+  }
+
+  const data: any = await res.json();
+  const block = data.content?.find((b: any) => b.type === "text");
+  return block?.text ?? "";
+}
 
 export class ClaudeOrchestrator {
   constructor(private ai: AIService) {}
@@ -68,15 +96,6 @@ export class ClaudeOrchestrator {
   }> {
     wsGateway.broadcast("ai:thinking", { message: "Processing..." });
 
-    let resolvedSessionId = sessionId;
-
-    if (resolvedSessionId) {
-      const existing = await sessionService.findByClaudeId(resolvedSessionId);
-      if (!existing) {
-        await sessionService.create(resolvedSessionId, `Chat: ${message.slice(0, 50)}`);
-      }
-    }
-
     let response = "";
 
     try {
@@ -85,52 +104,23 @@ export class ClaudeOrchestrator {
         ? `\n\nCurrent todos (${total} total):\n${todos.map((t) => `- [${t.status}] [${t.priority}] ${t.title}${t.dueDate ? ` (due: ${t.dueDate})` : ""}`).join("\n")}`
         : "\n\nNo todos yet.";
 
-      const messages = sdkQuery({
-        prompt: `You are a concise AI assistant for a todo app called CogniTask. Answer briefly in 1-3 sentences. Use the todo context provided to answer questions about tasks. Only use MCP tools when the user explicitly asks to create, update, or manage tasks.\n\nUser: ${message}\n\nTodo context:${todoContext}`,
-        options: {
-          mcpServers: { cognitask: cognitaskMcpServer },
-          allowedTools: ["mcp__cognitask__*"],
-          permissionMode: "bypassPermissions",
-          allowDangerouslySkipPermissions: true,
-          maxTurns: 3,
-          model: SDK_OPTIONS.model,
-          continue: !!resolvedSessionId,
-          ...(resolvedSessionId ? { sessionId: resolvedSessionId } : {}),
-        },
-      });
-
-      for await (const msg of messages) {
-        if (msg.type === "system" && msg.subtype === "init") {
-          resolvedSessionId = msg.session_id ?? resolvedSessionId;
-        }
-
-        if (msg.type === "assistant" && msg.message?.content) {
-          for (const block of msg.message.content) {
-            if (block.type === "tool_use") {
-              wsGateway.broadcast("ai:tool_call", { name: block.name, input: block.input });
-            }
-          }
-        }
-
-        if (msg.type === "result" && msg.subtype === "success") {
-          response = msg.result ?? "";
-        }
-      }
+      response = await directMessage(
+        `You are a concise AI assistant for a todo app called CogniTask. Answer briefly in 1-3 sentences. Use the todo context provided to answer questions about tasks. If the user asks to create, update, or manage tasks, tell them to use the UI.\n\nUser: ${message}\n\nTodo context:${todoContext}`,
+      );
     } catch (err) {
       logger.error("Claude chat error", { error: String(err) });
       response = `Error: ${String(err)}`;
     }
 
-    if (resolvedSessionId && !sessionId) {
+    const resolvedSessionId = sessionId ?? crypto.randomUUID();
+
+    if (!sessionId) {
       await sessionService.create(resolvedSessionId, `Chat: ${message.slice(0, 50)}`);
     }
 
     wsGateway.broadcast("ai:response", { response: response.slice(0, 200) });
 
-    return {
-      response,
-      sessionId: resolvedSessionId ?? crypto.randomUUID(),
-    };
+    return { response, sessionId: resolvedSessionId };
   }
 
   async getSmartSuggestions(context?: string) {
