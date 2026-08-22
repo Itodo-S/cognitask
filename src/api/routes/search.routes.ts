@@ -20,7 +20,7 @@ export async function searchRoutes(app: FastifyInstance) {
 
     if (query.q) {
       conditions.push(
-        sql`(${schema.todos.title} LIKE ${`%${query.q}%`} OR ${schema.todos.description} LIKE ${`%${query.q}%`})`
+        sql`(${schema.todos.title} ILIKE ${`%${query.q}%`} OR ${schema.todos.description} ILIKE ${`%${query.q}%`})`
       );
     }
     if (query.status) {

@@ -83,7 +83,7 @@ export class StatsService {
 
     const rows = await db
       .select({
-        date: sql<string>`date(${schema.todos.completedAt})`,
+        date: sql<string>`CAST(${schema.todos.completedAt} AS DATE)`,
         count: sql<number>`count(*)`,
       })
       .from(schema.todos)
@@ -93,8 +93,8 @@ export class StatsService {
           sql`${schema.todos.completedAt} > ${since}`
         )
       )
-      .groupBy(sql`date(${schema.todos.completedAt})`)
-      .orderBy(sql`date(${schema.todos.completedAt}) ASC`);
+      .groupBy(sql`CAST(${schema.todos.completedAt} AS DATE)`)
+      .orderBy(sql`CAST(${schema.todos.completedAt} AS DATE) ASC`);
 
     return rows as { date: string; count: number }[];
   }

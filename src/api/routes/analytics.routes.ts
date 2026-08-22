@@ -101,25 +101,25 @@ export async function analyticsRoutes(app: FastifyInstance) {
 
     const created = await db
       .select({
-        date: sql<string>`date(${schema.todos.createdAt})`,
+        date: sql<string>`CAST(${schema.todos.createdAt} AS DATE)`,
         count: sql<number>`count(*)`,
       })
       .from(schema.todos)
       .where(sql`${schema.todos.createdAt} > ${since}`)
-      .groupBy(sql`date(${schema.todos.createdAt})`)
-      .orderBy(sql`date(${schema.todos.createdAt}) ASC`);
+      .groupBy(sql`CAST(${schema.todos.createdAt} AS DATE)`)
+      .orderBy(sql`CAST(${schema.todos.createdAt} AS DATE) ASC`);
 
     const completed = await db
       .select({
-        date: sql<string>`date(${schema.todos.completedAt})`,
+        date: sql<string>`CAST(${schema.todos.completedAt} AS DATE)`,
         count: sql<number>`count(*)`,
       })
       .from(schema.todos)
       .where(
         and(sql`${schema.todos.completedAt} > ${since}`, sql`${schema.todos.status} = 'completed'`)
       )
-      .groupBy(sql`date(${schema.todos.completedAt})`)
-      .orderBy(sql`date(${schema.todos.completedAt}) ASC`);
+      .groupBy(sql`CAST(${schema.todos.completedAt} AS DATE)`)
+      .orderBy(sql`CAST(${schema.todos.completedAt} AS DATE) ASC`);
 
     return reply.send(success({ created, completed }));
   });

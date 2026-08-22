@@ -1,7 +1,7 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
-export const todos = sqliteTable("todos", {
+export const todos = pgTable("todos", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -22,14 +22,14 @@ export const todos = sqliteTable("todos", {
     .$defaultFn(() => new Date().toISOString()),
 });
 
-export const tags = sqliteTable("tags", {
+export const tags = pgTable("tags", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull().unique(),
 });
 
-export const todoTags = sqliteTable("todo_tags", {
+export const todoTags = pgTable("todo_tags", {
   todoId: text("todo_id")
     .notNull()
     .references(() => todos.id, { onDelete: "cascade" }),
@@ -38,7 +38,7 @@ export const todoTags = sqliteTable("todo_tags", {
     .references(() => tags.id, { onDelete: "cascade" }),
 });
 
-export const sessions = sqliteTable("sessions", {
+export const sessions = pgTable("sessions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
@@ -53,7 +53,7 @@ export const sessions = sqliteTable("sessions", {
     .$defaultFn(() => new Date().toISOString()),
 });
 
-export const userPreferences = sqliteTable("user_preferences", {
+export const userPreferences = pgTable("user_preferences", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),

@@ -1,13 +1,13 @@
-export default {
-  "version": "0",
-  "dialect": "sqlite",
+{
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
-      "version": "0",
-      "when": 1724000000000,
-      "tag": "0000_initial",
+      "version": "7",
+      "when": 1787324527532,
+      "tag": "0000_nostalgic_meltdown",
       "breakpoints": true
     }
   ]
-};
+}
