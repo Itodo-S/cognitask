@@ -29,13 +29,21 @@ export interface StructuredOptions<T> extends MessageOptions {
 const DEFAULT_MODEL = "claude-opus-5";
 const MAX_ATTEMPTS = 3;
 
+function cleanString(val?: string): string {
+  if (!val) return "";
+  return val.trim().replace(/^["']|["']$/g, "");
+}
+
 function apiUrl(): string {
-  const baseUrl = env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com";
-  return baseUrl.endsWith("/") ? `${baseUrl}v1/messages` : `${baseUrl}/v1/messages`;
+  const rawUrl = cleanString(env.ANTHROPIC_BASE_URL) || "https://api.anthropic.com";
+  let baseUrl = rawUrl.replace(/\/+$/, "");
+  if (baseUrl.endsWith("/v1/messages")) return baseUrl;
+  if (baseUrl.endsWith("/v1")) return `${baseUrl}/messages`;
+  return `${baseUrl}/v1/messages`;
 }
 
 function headers(): Record<string, string> {
-  const apiKey = env.ANTHROPIC_AUTH_TOKEN ?? env.ANTHROPIC_API_KEY ?? "";
+  const apiKey = cleanString(env.ANTHROPIC_AUTH_TOKEN) || cleanString(env.ANTHROPIC_API_KEY) || "";
   return {
     "Content-Type": "application/json",
     "x-api-key": apiKey,
@@ -49,11 +57,11 @@ function headers(): Record<string, string> {
 }
 
 export function aiConfigured(): boolean {
-  return Boolean(env.ANTHROPIC_API_KEY || env.ANTHROPIC_AUTH_TOKEN);
+  return Boolean(cleanString(env.ANTHROPIC_API_KEY) || cleanString(env.ANTHROPIC_AUTH_TOKEN));
 }
 
 export function modelName(): string {
-  return env.ANTHROPIC_MODEL ?? env.CLAUDE_MODEL ?? DEFAULT_MODEL;
+  return cleanString(env.ANTHROPIC_MODEL) || cleanString(env.CLAUDE_MODEL) || DEFAULT_MODEL;
 }
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -140,7 +140,8 @@ export class ClaudeOrchestrator {
       if (!response.trim()) response = "I didn't get a reply from the model — try asking again.";
     } catch (err) {
       logger.error("Claude chat error", { error: String(err) });
-      response = "I couldn't reach the model just now. Check the API key and try again.";
+      const msg = err instanceof Error ? err.message : String(err);
+      response = `I couldn't reach the model just now (${msg}). Please check the API key and settings.`;
     }
 
     const resolvedSessionId = sessionId ?? crypto.randomUUID();
