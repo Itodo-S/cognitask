@@ -15,6 +15,7 @@ import {
   tagRoutes,
   sseRoutes,
   bulkRoutes,
+  checklistRoutes,
 } from "./api/routes/index.js";
 import { preferencesRoutes } from "./api/routes/preferences.routes.js";
 import { analyticsRoutes } from "./api/routes/analytics.routes.js";
@@ -59,7 +60,6 @@ import { shortcutRoutes } from "./api/routes/shortcut.routes.js";
 import { dailyDigestRoutes } from "./api/routes/daily-digest.routes.js";
 import { onboardingRoutes } from "./api/routes/onboarding.routes.js";
 import { wsRoutes } from "./ws/index.js";
-import { logger } from "./utils/logger.js";
 
 const app = Fastify({
   logger: {
@@ -77,9 +77,14 @@ await app.register(requestId);
 await app.register(requestLogger);
 await app.register(securityHeaders);
 
+// Must be set before routes are registered: each awaited `register` creates an
+// encapsulated context that captures whatever error handler exists at the time.
+app.setErrorHandler(errorHandler);
+
 await app.register(wsRoutes);
 
 await app.register(todoRoutes);
+await app.register(checklistRoutes);
 await app.register(aiRoutes);
 await app.register(sessionRoutes);
 await app.register(statsRoutes);
@@ -129,6 +134,5 @@ await app.register(shortcutRoutes);
 await app.register(dailyDigestRoutes);
 await app.register(onboardingRoutes);
 
-app.setErrorHandler(errorHandler);
 
 export default app;

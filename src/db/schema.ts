@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, boolean } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const todos = pgTable("todos", {
@@ -14,6 +14,24 @@ export const todos = pgTable("todos", {
   completedAt: text("completed_at"),
   parentId: text("parent_id").references((): any => todos.id),
   aiMetadata: text("ai_metadata"),
+  createdAt: text("created_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+  updatedAt: text("updated_at")
+    .notNull()
+    .$defaultFn(() => new Date().toISOString()),
+});
+
+export const checklistItems = pgTable("checklist_items", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  todoId: text("todo_id")
+    .notNull()
+    .references(() => todos.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  done: boolean("done").notNull().default(false),
+  position: integer("position").notNull().default(0),
   createdAt: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),
@@ -69,6 +87,14 @@ export const todosRelations = relations(todos, ({ one, many }) => ({
   }),
   subtasks: many(todos, { relationName: "subtasks" }),
   todoTags: many(todoTags),
+  checklistItems: many(checklistItems),
+}));
+
+export const checklistItemsRelations = relations(checklistItems, ({ one }) => ({
+  todo: one(todos, {
+    fields: [checklistItems.todoId],
+    references: [todos.id],
+  }),
 }));
 
 export const tagsRelations = relations(tags, ({ many }) => ({

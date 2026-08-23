@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { Input, Textarea } from "@/components/ui/Input";
 import { useTodoStore } from "@/stores/todoStore";
 import { useToast } from "@/components/ui/Toast";
 import type { Todo } from "@/types";
@@ -14,39 +13,58 @@ interface TodoCardEditFormProps {
 }
 
 export function TodoCardEditForm({ todo, onClose }: TodoCardEditFormProps) {
-  const [editTitle, setEditTitle] = useState(todo.title);
-  const [editDesc, setEditDesc] = useState(todo.description ?? "");
-  
+  const [title, setTitle] = useState(todo.title);
+  const [description, setDescription] = useState(todo.description ?? "");
+  const [saving, setSaving] = useState(false);
+
   const { updateTodo } = useTodoStore();
   const { toast } = useToast();
 
-  const handleSave = async () => {
-    await updateTodo(todo.id, { title: editTitle, description: editDesc });
-    onClose();
-    toast("Task updated");
+  const save = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    try {
+      await updateTodo(todo.id, { title: title.trim(), description: description.trim() });
+      onClose();
+      toast("Rewritten");
+    } catch {
+      toast("Couldn't save", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
-      exit={{ opacity: 0, height: 0 }}
-      className="space-y-2"
+      className="space-y-2 overflow-hidden"
     >
-      <Input
-        value={editTitle}
-        onChange={(e) => setEditTitle(e.target.value)}
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") save();
+          if (e.key === "Escape") onClose();
+        }}
         autoFocus
+        className="write-line font-hand text-[22px] leading-tight"
       />
-      <Textarea
-        value={editDesc}
-        onChange={(e) => setEditDesc(e.target.value)}
-        placeholder="Add a description..."
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        onKeyDown={(e) => e.key === "Escape" && onClose()}
+        placeholder="a note underneath…"
         rows={2}
+        className="write-line resize-none text-[15px]"
       />
       <div className="flex gap-2">
-        <Button size="sm" onClick={handleSave}>Save</Button>
-        <Button size="sm" variant="ghost" onClick={onClose}>Cancel</Button>
+        <Button size="sm" onClick={save} disabled={saving || !title.trim()}>
+          Save
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onClose}>
+          Never mind
+        </Button>
       </div>
     </motion.div>
   );

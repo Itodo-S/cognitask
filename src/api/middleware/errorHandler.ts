@@ -13,8 +13,9 @@ export async function errorHandler(
   });
 
   if (error instanceof ZodError || error.name === "ZodError") {
-    // If it's a ZodError from manual parsing, error.errors might be available
-    const zodErrors = (error as ZodError).errors || [];
+    // Zod 4 exposes issues on `.issues`; older callers may still throw the
+    // serialised list as the message.
+    const zodErrors = (error as unknown as ZodError).issues ?? [];
     // If it's a raw string message that looks like Zod JSON (because error.errors was stripped)
     let details: any[] = [];
     if (zodErrors.length > 0) {

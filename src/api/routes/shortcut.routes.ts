@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
 import { sql, eq } from "drizzle-orm";
-import { success, error } from "../../utils/helpers.js";
+import { success } from "../../utils/helpers.js";
 import { z } from "zod";
 
 export async function shortcutRoutes(app: FastifyInstance) {
@@ -26,6 +26,7 @@ export async function shortcutRoutes(app: FastifyInstance) {
   app.put("/api/shortcuts", async (request, reply) => {
     const body = z
       .record(
+        z.string(),
         z.object({
           key: z.string(),
           action: z.string(),

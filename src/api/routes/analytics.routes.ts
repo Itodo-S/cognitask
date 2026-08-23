@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { sql, eq, and } from "drizzle-orm";
+import { sql, and } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function analyticsRoutes(app: FastifyInstance) {

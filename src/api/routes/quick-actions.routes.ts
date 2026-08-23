@@ -29,7 +29,15 @@ export async function quickActionsRoutes(app: FastifyInstance) {
   
   app.post("/api/quick/defer", async (request, reply) => {
     const body = z.object({ todoId: z.string() }).parse(request.body);
-    return this.quickActionsRoutes_snooze(app, body.todoId, 1);
+    const todo = await todoService.findById(body.todoId);
+    if (!todo) return reply.code(404).send(error("Todo not found"));
+
+    // Defer is just a one-day snooze.
+    const base = todo.dueDate ? new Date(todo.dueDate) : new Date();
+    const updated = await todoService.update(body.todoId, {
+      dueDate: new Date(base.getTime() + 86400000).toISOString(),
+    });
+    return reply.send(success(updated, "Deferred by a day"));
   });
 
   

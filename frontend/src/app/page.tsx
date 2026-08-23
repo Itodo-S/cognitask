@@ -1,166 +1,201 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/Card";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { clsx } from "clsx";
 import { Header } from "@/components/layout/Header";
-import type { DashboardStats } from "@/types";
+import { StickyNote, CoffeeRing } from "@/components/ui/Paper";
+import { InkCheck, InkStrike } from "@/components/ui/InkCheck";
+import { useTodoStore } from "@/stores/todoStore";
+import { dashboardApi } from "@/lib/api";
+import type { DashboardData } from "@/types";
 
-const defaultStats: DashboardStats = {
-  total: 0,
-  pending: 0,
-  inProgress: 0,
-  completed: 0,
-  overdue: 0,
-  completionRate: 0,
-  recentCompletions: [],
-  upcomingDeadlines: [],
-  categoryBreakdown: [],
-  priorityBreakdown: [],
-  aiInsights: [],
-};
+function greeting(d: Date) {
+  const h = d.getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<DashboardStats>(defaultStats);
+export default function TodayPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { updateStatus } = useTodoStore();
 
-  useEffect(() => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/dashboard`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        const p = d.data ?? d;
-        if (!p || !p.stats) return;
-        setStats({
-          total: p.stats.total || 0,
-          pending: p.stats.pending || 0,
-          inProgress: p.stats.inProgress || 0,
-          completed: p.stats.completed || 0,
-          overdue: p.stats.overdue || 0,
-          completionRate: p.stats.total ? Math.round((p.stats.completed / p.stats.total) * 100) : 0,
-          recentCompletions: p.recentCompleted || [],
-          upcomingDeadlines: p.upcomingDue || [],
-          categoryBreakdown: Object.entries(p.categoryBreakdown || {}).map(([k, v]) => ({ category: k, count: v as number })),
-          priorityBreakdown: Object.entries(p.priorityBreakdown || {}).map(([k, v]) => ({ priority: k, count: v as number })),
-          aiInsights: [],
-        });
-      })
-      .catch(() => {})
+  const load = () => {
+    dashboardApi
+      .get()
+      .then(setData)
+      .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
-  const statCards = [
-    { label: "Total", value: stats.total, accent: false },
-    { label: "Pending", value: stats.pending, accent: false },
-    { label: "In Progress", value: stats.inProgress, accent: true },
-    { label: "Completed", value: stats.completed, accent: false },
+  useEffect(load, []);
+
+  const now = new Date();
+  const stats = data?.stats;
+  const overdue = (data?.upcomingDue ?? []).length;
+
+  const cross = async (id: string) => {
+    await updateStatus(id, "completed");
+    load();
+  };
+
+  const tally = [
+    { label: "still open", value: (stats?.pending ?? 0) + (stats?.inProgress ?? 0) },
+    { label: "in hand", value: stats?.inProgress ?? 0 },
+    { label: "done today", value: stats?.completedToday ?? 0 },
+    { label: "overdue", value: stats?.overdue ?? 0, alarm: true },
   ];
 
   return (
-    <div>
-      <Header title="Dashboard" subtitle="Your task overview at a glance" />
+    <div className="relative">
+      <CoffeeRing className="-right-2 top-10 hidden sm:block" size={92} />
 
-      {}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
-        {statCards.map((s) => (
-          <Card key={s.label}>
-            <CardContent className="text-center py-6">
-              <p className="font-sans text-xs text-ink-400 uppercase tracking-wider mb-1">{s.label}</p>
-              <p className={`font-serif text-3xl font-semibold ${s.accent ? "text-ink-900" : "text-ink-600"}`}>
-                {loading ? "—" : s.value}
-              </p>
-            </CardContent>
-          </Card>
+      <Header
+        title={greeting(now)}
+        subtitle={now.toLocaleDateString(undefined, {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })}
+      />
+
+      {/* The tally you'd scribble in the top corner. */}
+      <div className="mb-8 flex flex-wrap gap-x-8 gap-y-3">
+        {tally.map((t) => (
+          <div key={t.label}>
+            <p
+              className={clsx(
+                "font-hand text-[40px] leading-none",
+                t.alarm && t.value > 0 ? "text-redpen-500" : "text-ink-900"
+              )}
+            >
+              {loading ? "—" : t.value}
+            </p>
+            <p className="mt-1 font-type text-[9px] uppercase tracking-[0.16em] text-pencil-400">
+              {t.label}
+            </p>
+          </div>
         ))}
       </div>
 
-      {}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {}
-        <Card>
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Upcoming Deadlines</h2>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-ink-100/50 rounded animate-pulse" />
-                ))}
-              </div>
-            ) : stats.upcomingDeadlines.length === 0 ? (
-              <p className="font-sans text-sm text-ink-400 text-center py-8">
-                No upcoming deadlines — all clear!
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {stats.upcomingDeadlines.map((todo) => (
-                  <div key={todo.id} className="flex items-center justify-between py-2 border-b border-ink-200/30 last:border-0">
-                    <div className="min-w-0">
-                      <p className="font-serif text-sm text-ink-800 truncate">{todo.title}</p>
-                      {todo.category && (
-                        <span className="paper-badge bg-paper-100 text-ink-500 border-ink-200 mt-1 inline-block">
-                          {todo.category}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-sans text-xs text-ink-500 flex-shrink-0 ml-3">
-                      {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {stats && stats.overdue > 0 && (
+        <StickyNote tone="pink" tilt="a" className="mb-8 max-w-sm">
+          <p className="font-hand text-[21px] leading-snug text-redpen-600">
+            {stats.overdue} thing{stats.overdue === 1 ? "" : "s"} slipped past its date.
+          </p>
+          <Link
+            href="/ai"
+            className="mt-1 inline-block font-hand text-[17px] text-ink-800 underline decoration-dotted underline-offset-4"
+          >
+            ask what to do about it →
+          </Link>
+        </StickyNote>
+      )}
 
-        {}
-        <Card>
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Recent Completions</h2>
-            {loading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-12 bg-ink-100/50 rounded animate-pulse" />
-                ))}
-              </div>
-            ) : stats.recentCompletions.length === 0 ? (
-              <p className="font-sans text-sm text-ink-400 text-center py-8">
-                No completed tasks yet — start checking things off!
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {stats.recentCompletions.map((todo) => (
-                  <div key={todo.id} className="flex items-center justify-between py-2 border-b border-ink-200/30 last:border-0">
-                    <div className="min-w-0">
-                      <p className="font-serif text-sm text-ink-500 line-through truncate">{todo.title}</p>
-                    </div>
-                    <span className="font-sans text-xs text-ink-400 flex-shrink-0 ml-3">
-                      {todo.completedAt ? new Date(todo.completedAt).toLocaleDateString() : "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        {/* What's on the bench right now. */}
+        <section>
+          <h2 className="mb-3 font-hand text-[26px] leading-none text-ink-900">
+            <span className="pen-underline">In hand</span>
+          </h2>
 
-      {}
-      {stats.aiInsights.length > 0 && (
-        <Card className="mt-6">
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">AI Insights</h2>
+          {loading ? (
             <div className="space-y-2">
-              {stats.aiInsights.map((insight, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-paper-100/50 border border-ink-200/30">
-                  <svg className="flex-shrink-0 mt-0.5 text-ink-400" width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                    <circle cx="7" cy="7" r="6" />
-                    <path d="M7 4.5v3M7 9.5v.01" />
-                  </svg>
-                  <p className="font-sans text-sm text-ink-600">{insight}</p>
-                </div>
+              {[0, 1].map((i) => (
+                <div key={i} className="h-5 animate-pulse rounded-full bg-pencil-100" style={{ width: `${80 - i * 15}%` }} />
               ))}
             </div>
-          </CardContent>
-        </Card>
+          ) : !data?.activeInProgress?.length ? (
+            <p className="font-note text-[15px] text-pencil-300">
+              Nothing picked up yet.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {data.activeInProgress.map((todo, i) => (
+                <motion.li
+                  key={todo.id}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-start gap-2.5 border-b border-dashed border-rule-soft pb-2"
+                >
+                  <InkCheck state="empty" onClick={() => cross(todo.id)} label={`Complete ${todo.title}`} className="mt-0.5" />
+                  <span className="font-hand text-[20px] leading-tight text-ink-900">{todo.title}</span>
+                </motion.li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Coming up. */}
+        <section>
+          <h2 className="mb-3 font-hand text-[26px] leading-none text-ink-900">
+            <span className="pen-underline">Coming up</span>
+          </h2>
+
+          {loading ? (
+            <div className="space-y-2">
+              {[0, 1].map((i) => (
+                <div key={i} className="h-5 animate-pulse rounded-full bg-pencil-100" style={{ width: `${76 - i * 14}%` }} />
+              ))}
+            </div>
+          ) : overdue === 0 ? (
+            <p className="font-note text-[15px] text-pencil-300">Nothing with a date on it.</p>
+          ) : (
+            <ul className="space-y-2">
+              {data!.upcomingDue.map((todo, i) => (
+                <motion.li
+                  key={todo.id}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-baseline justify-between gap-3 border-b border-dashed border-rule-soft pb-2"
+                >
+                  <span className="min-w-0 truncate font-hand text-[20px] leading-tight text-ink-800">
+                    {todo.title}
+                  </span>
+                  <span className="flex-shrink-0 font-type text-[10px] tracking-wide text-pencil-400">
+                    {todo.dueDate
+                      ? new Date(todo.dueDate).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })
+                      : "—"}
+                  </span>
+                </motion.li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      {/* Recently crossed off, in faded ink. */}
+      {data?.recentCompleted && data.recentCompleted.length > 0 && (
+        <section className="mt-10">
+          <h2 className="mb-3 font-hand text-[22px] leading-none text-pencil-400">
+            Crossed off lately
+          </h2>
+          <ul className="space-y-1.5">
+            {data.recentCompleted.map((todo) => (
+              <li key={todo.id} className="relative inline-flex w-full items-baseline gap-2">
+                <span className="relative font-hand text-[18px] leading-tight text-pencil-300">
+                  {todo.title}
+                  <InkStrike />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!loading && !data && (
+        <p className="mt-8 font-hand text-[19px] text-redpen-500">
+          Couldn&apos;t read the notebook — is the backend running?
+        </p>
       )}
     </div>
   );

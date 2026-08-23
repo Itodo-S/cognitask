@@ -6,188 +6,232 @@ import { clsx } from "clsx";
 import type { Todo, TodoPriority } from "@/types";
 import { useTodoStore } from "@/stores/todoStore";
 import { useToast } from "@/components/ui/Toast";
-import { Tooltip } from "@/components/ui/Tooltip";
-import { TodoCardEditForm } from "./TodoCardEditForm";
+import { InkCheck, InkStrike } from "@/components/ui/InkCheck";
+import { Checklist } from "./Checklist";
 import { TodoCardActions } from "./TodoCardActions";
+import { TodoCardEditForm } from "./TodoCardEditForm";
 
-const priorityConfig: Record<TodoPriority, { label: string; dot: string; bg: string }> = {
-  urgent: { label: "Urgent", dot: "bg-red-500", bg: "bg-red-50 text-red-700 border-red-200" },
-  high: { label: "High", dot: "bg-ink-900", bg: "bg-ink-100 text-ink-800 border-ink-300" },
-  medium: { label: "Medium", dot: "bg-ink-500", bg: "bg-ink-50 text-ink-600 border-ink-200" },
-  low: { label: "Low", dot: "bg-ink-300", bg: "bg-paper-50 text-ink-500 border-ink-200" },
+const priorityMark: Record<TodoPriority, { label: string; className: string }> = {
+  urgent: { label: "!!", className: "text-redpen-500" },
+  high: { label: "!", className: "text-redpen-400" },
+  medium: { label: "", className: "" },
+  low: { label: "", className: "" },
 };
+
+function dueLabel(iso: string) {
+  const due = new Date(iso);
+  const today = new Date();
+  const days = Math.round(
+    (new Date(due.toDateString()).getTime() - new Date(today.toDateString()).getTime()) / 86400000
+  );
+
+  if (days < 0) return { text: `${Math.abs(days)}d overdue`, overdue: true };
+  if (days === 0) return { text: "today", overdue: false, soon: true };
+  if (days === 1) return { text: "tomorrow", overdue: false, soon: true };
+  if (days <= 6) return { text: due.toLocaleDateString(undefined, { weekday: "long" }), overdue: false };
+  return { text: due.toLocaleDateString(undefined, { month: "short", day: "numeric" }), overdue: false };
+}
 
 interface TodoCardProps {
   todo: Todo;
   depth?: number;
+  index?: number;
 }
 
-export function TodoCard({ todo, depth = 0 }: TodoCardProps) {
+export function TodoCard({ todo, depth = 0, index = 0 }: TodoCardProps) {
   const [editing, setEditing] = useState(false);
-  const [showSubtasks, setShowSubtasks] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { updateStatus } = useTodoStore();
   const { toast } = useToast();
-  const pConfig = priorityConfig[todo.priority] ?? priorityConfig.medium;
 
-  const handleToggle = async () => {
-    const next = todo.status === "completed" ? "pending" : "completed";
+  const completed = todo.status === "completed";
+  const urgent = todo.priority === "urgent" && !completed;
+  const tone = urgent ? "red" : "ink";
+
+  const checklist = todo.checklist ?? [];
+  const doneCount = checklist.filter((i) => i.done).length;
+  const checkState = completed
+    ? "checked"
+    : checklist.length > 0 && doneCount > 0
+    ? "half"
+    : "empty";
+
+  const due = todo.dueDate ? dueLabel(todo.dueDate) : null;
+  const mark = priorityMark[todo.priority] ?? priorityMark.medium;
+
+  const toggle = async () => {
+    const next = completed ? "pending" : "completed";
     await updateStatus(todo.id, next);
-    toast(next === "completed" ? "Task completed!" : "Task reopened");
+    toast(next === "completed" ? "Crossed off ✓" : "Back on the list");
   };
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -12, transition: { duration: 0.15 } }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className={clsx(
-        "group",
-        depth > 0 && "ml-4 sm:ml-8 pl-4 border-l-2 border-ink-200/40"
-      )}
+      exit={{ opacity: 0, x: -14, transition: { duration: 0.16 } }}
+      transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+      className={clsx("group relative", depth > 0 && "ml-5 sm:ml-8")}
     >
+      {/* Subtasks hang off a bracket drawn from the parent. */}
+      {depth > 0 && (
+        <span
+          aria-hidden="true"
+          className="absolute -left-4 top-0 h-full w-4 border-b-2 border-l-2 border-dashed border-pencil-200"
+          style={{ height: "1.6rem", borderBottomLeftRadius: "8px" }}
+        />
+      )}
+
       <div
         className={clsx(
-          "paper-card px-4 py-3 transition-all duration-200",
-          todo.status === "completed" && "opacity-60",
-          todo.priority === "urgent" && "border-l-2 border-l-red-400"
+          "relative rounded-[3px] px-3 py-2 transition-colors duration-200",
+          "border-b border-dashed border-rule-soft",
+          !completed && "hover:bg-marker-yellow/20",
+          completed && "opacity-60",
+          urgent && "bg-redpen-100/25"
         )}
       >
         <div className="flex items-start gap-3">
-          {}
-          <button
-            onClick={handleToggle}
-            className={clsx(
-              "flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center",
-              "transition-all duration-200",
-              todo.status === "completed"
-                ? "bg-ink-900 border-ink-900"
-                : todo.status === "in_progress"
-                ? "border-blue-500 bg-blue-50"
-                : "border-ink-300 hover:border-ink-500"
-            )}
-          >
-            <AnimatePresence mode="wait">
-              {todo.status === "completed" && (
-                <motion.svg
-                  key="check"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                  width="12" height="12" viewBox="0 0 12 12" fill="none"
-                >
-                  <path d="M2.5 6l2.5 2.5L9.5 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </motion.svg>
-              )}
-              {todo.status === "in_progress" && (
-                <motion.div
-                  key="progress"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                  className="w-2.5 h-2.5 rounded-sm bg-blue-500"
-                />
-              )}
-            </AnimatePresence>
-          </button>
+          {/* Red margin marks for urgency, in the left gutter. */}
+          {mark.label && !completed && (
+            <span
+              className={clsx("margin-note absolute -left-5 top-2 text-xl font-bold", mark.className)}
+              aria-label={`${todo.priority} priority`}
+            >
+              {mark.label}
+            </span>
+          )}
 
-          {/* Content */}
-          <div className="flex-1 min-w-0">
+          <InkCheck
+            state={checkState}
+            tone={tone}
+            onClick={toggle}
+            label={completed ? `Reopen ${todo.title}` : `Complete ${todo.title}`}
+            className="mt-0.5"
+          />
+
+          <div className="min-w-0 flex-1">
             {editing ? (
               <TodoCardEditForm todo={todo} onClose={() => setEditing(false)} />
             ) : (
               <>
-                <div className="flex items-center gap-2">
-                  <h3
-                    className={clsx(
-                      "font-serif text-sm font-medium leading-snug",
-                      todo.status === "completed" && "line-through text-ink-400"
-                    )}
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <button
+                    onClick={() => setOpen(!open)}
+                    className="relative min-w-0 text-left"
                   >
-                    {todo.title}
-                  </h3>
-                </div>
-
-                <AnimatePresence>
-                  {todo.description && expanded && (
-                    <motion.p
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="font-sans text-xs text-ink-500 mt-1 leading-relaxed overflow-hidden"
+                    <span
+                      className={clsx(
+                        "font-hand text-[22px] leading-tight tracking-wide",
+                        completed ? "text-pencil-300" : urgent ? "text-redpen-600" : "text-ink-900"
+                      )}
                     >
-                      {todo.description}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-
-                {/* Meta row */}
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <Tooltip content={`Priority: ${pConfig.label}`}>
-                    <span className={clsx("paper-badge", pConfig.bg)}>
-                      <span className={clsx("w-1.5 h-1.5 rounded-full mr-1", pConfig.dot)} />
-                      {pConfig.label}
+                      {todo.title}
                     </span>
-                  </Tooltip>
+                    {completed && <InkStrike tone={tone} />}
+                  </button>
+
+                  {todo.status === "in_progress" && (
+                    <span className="stamp stamp-ink">in progress</span>
+                  )}
+
+                  {due && !completed && (
+                    <span
+                      className={clsx(
+                        "font-type text-[10px] tracking-wide",
+                        due.overdue
+                          ? "stamp stamp-red"
+                          : due.soon
+                          ? "text-redpen-400"
+                          : "text-pencil-400"
+                      )}
+                    >
+                      {due.text}
+                    </span>
+                  )}
+
+                  {checklist.length > 0 && (
+                    <span className="font-type text-[10px] tracking-widest text-pencil-300">
+                      {doneCount}/{checklist.length}
+                    </span>
+                  )}
 
                   {todo.category && (
-                    <span className="paper-badge bg-paper-100 text-ink-500 border-ink-200">
-                      {todo.category}
+                    <span className="font-type text-[10px] lowercase tracking-wide text-ink-400">
+                      #{todo.category}
                     </span>
-                  )}
-
-                  {todo.dueDate && (
-                    <span className="font-sans text-[11px] text-ink-400">
-                      Due {new Date(todo.dueDate).toLocaleDateString()}
-                    </span>
-                  )}
-
-                  {todo.description && (
-                    <button
-                      onClick={() => setExpanded(!expanded)}
-                      className="font-sans text-[11px] text-ink-400 hover:text-ink-600 underline"
-                    >
-                      {expanded ? "less" : "more"}
-                    </button>
-                  )}
-
-                  {todo.subtasks && todo.subtasks.length > 0 && (
-                    <button
-                      onClick={() => setShowSubtasks(!showSubtasks)}
-                      className="font-sans text-[11px] text-ink-400 hover:text-ink-600 underline"
-                    >
-                      {showSubtasks ? "hide" : `${todo.subtasks.length} subtasks`}
-                    </button>
                   )}
                 </div>
+
+                {todo.description && !open && (
+                  <p className="mt-0.5 truncate font-note text-[14px] text-pencil-400">
+                    {todo.description}
+                  </p>
+                )}
               </>
             )}
           </div>
 
-          {/* Actions */}
           {!editing && <TodoCardActions todo={todo} onEdit={() => setEditing(true)} />}
         </div>
+
+        {/* Everything written under the line, revealed on click. */}
+        <AnimatePresence initial={false}>
+          {open && !editing && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden pl-9"
+            >
+              {todo.description && (
+                <p className="mb-1 mt-1 font-note text-[15px] leading-relaxed text-pencil-500">
+                  {todo.description}
+                </p>
+              )}
+              <Checklist todoId={todo.id} items={checklist} tone={tone} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Collapsed: still show unfinished lines so nothing hides. */}
+        {!open && !editing && checklist.length > 0 && (
+          <ul className="mt-1 space-y-0.5 pl-9">
+            {checklist
+              .filter((i) => !i.done)
+              .slice(0, 3)
+              .map((item) => (
+                <li key={item.id} className="flex items-start gap-2">
+                  <InkCheck
+                    size="sm"
+                    tone={tone}
+                    state="empty"
+                    onClick={() => useTodoStore.getState().toggleChecklistItem(todo.id, item.id)}
+                    label={`Check ${item.text}`}
+                    className="mt-[3px]"
+                  />
+                  <span className="font-note text-[15px] leading-snug text-ink-600">{item.text}</span>
+                </li>
+              ))}
+            {checklist.filter((i) => !i.done).length > 3 && (
+              <li className="pl-6 font-type text-[10px] tracking-widest text-pencil-300">
+                +{checklist.filter((i) => !i.done).length - 3} more
+              </li>
+            )}
+          </ul>
+        )}
       </div>
 
-      {}
-      <AnimatePresence>
-        {showSubtasks && todo.subtasks && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-1 space-y-1 overflow-hidden"
-          >
-            {todo.subtasks.map((sub) => (
-              <TodoCard key={sub.id} todo={sub} depth={depth + 1} />
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {todo.subtasks && todo.subtasks.length > 0 && (
+        <div className="mt-0.5">
+          {todo.subtasks.map((sub, i) => (
+            <TodoCard key={sub.id} todo={sub} depth={depth + 1} index={i} />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

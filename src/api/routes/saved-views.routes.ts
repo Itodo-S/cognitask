@@ -27,7 +27,7 @@ export async function savedViewsRoutes(app: FastifyInstance) {
     const body = z
       .object({
         name: z.string().min(1).max(200),
-        filters: z.record(z.unknown()),
+        filters: z.record(z.string(), z.unknown()),
         icon: z.string().optional(),
       })
       .parse(request.body);

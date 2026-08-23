@@ -1,20 +1,15 @@
+@import url("https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Kalam:wght@300;400;700&family=Special+Elite&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
-
 @layer base {
   :root {
-    --paper-bg: #fefefe;
-    --paper-surface: #f8f8f8;
-    --ink-primary: #171717;
-    --ink-secondary: #525252;
-    --ink-muted: #a3a3a3;
-    --ink-faint: #d4d4d4;
-    --line-color: #e5e5e5;
-    --paper-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --paper-radius: 6px;
+    --rule-height: 30px;
+    --margin-x: 58px;
+    --ink: #1f3a5f;
+    --paper: #fffdf7;
   }
 
   * {
@@ -27,20 +22,25 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* The desk the notebook sits on. */
   body {
-    @apply bg-paper-50 text-ink-900 font-serif;
+    @apply text-ink-800 font-note;
+    background-color: #ded3bd;
     background-image:
-      radial-gradient(circle at 20% 50%, rgba(0, 0, 0, 0.01) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.008) 0%, transparent 50%);
+      radial-gradient(ellipse at 15% 0%, rgba(255, 255, 255, 0.5) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(120, 96, 60, 0.16) 0%, transparent 55%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   ::selection {
-    @apply bg-ink-900 text-paper-50;
+    background: #fdf3a7;
+    color: #182b46;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {
@@ -48,145 +48,397 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-ink-300 rounded-full;
-    border: 2px solid transparent;
+    background: #c9bfa5;
+    border-radius: 6px;
+    border: 3px solid transparent;
+    background-clip: content-box;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-ink-400;
+    background: #a89a7c;
+    background-clip: content-box;
+  }
+
+  /* Handwriting sits low in its line box; nudge inputs so text sits on the rule. */
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
   }
 }
 
 @layer components {
-  .paper-card {
-    @apply bg-paper-50 border border-ink-200/60 rounded-lg shadow-paper;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  /* ------------------------------------------------------------------ *
+   * Paper surfaces
+   * ------------------------------------------------------------------ */
+
+  /* A plain sheet of paper. */
+  .sheet {
+    position: relative;
+    background-color: theme("colors.paper.50");
+    box-shadow: theme("boxShadow.sheet");
+    border: 1px solid rgba(140, 120, 84, 0.16);
   }
 
-  .paper-card:hover {
-    @apply shadow-paper-md;
+  /* Fibrous grain, so the paper isn't a flat rectangle of colour. */
+  .sheet::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
   }
 
-  .paper-input {
-    @apply w-full px-3 py-2 bg-paper-50 border border-ink-200 rounded-md
-           font-sans text-sm text-ink-900 placeholder:text-ink-400
-           focus:outline-none focus:ring-1 focus:ring-ink-900/20 focus:border-ink-900/40
-           transition-all duration-200;
+  .sheet > * {
+    position: relative;
+    z-index: 1;
   }
 
-  .paper-btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2
-           font-sans text-sm font-medium rounded-md
-           border border-ink-900 bg-ink-900 text-paper-50
-           hover:bg-ink-800 active:bg-ink-950
-           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
-           transition-all duration-150 ease-out
-           disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none;
-  }
-
-  .paper-btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2
-           font-sans text-sm font-medium rounded-md
-           border border-transparent bg-transparent text-ink-700
-           hover:bg-ink-100 active:bg-ink-200
-           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
-           transition-all duration-150 ease-out;
-  }
-
-  .paper-btn-outline {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2
-           font-sans text-sm font-medium rounded-md
-           border border-ink-300 bg-paper-50 text-ink-700
-           hover:bg-ink-50 hover:border-ink-400 active:bg-ink-100
-           focus:outline-none focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
-           transition-all duration-150 ease-out;
-  }
-
-  .paper-divider {
-    @apply w-full h-px bg-ink-200/60;
-  }
-
-  .paper-checkbox {
-    @apply w-4 h-4 rounded border border-ink-300 bg-paper-50
-           checked:bg-ink-900 checked:border-ink-900
-           focus:ring-2 focus:ring-ink-900/20 focus:ring-offset-2
-           cursor-pointer transition-all duration-150;
-  }
-
-  .paper-badge {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full
-           font-sans text-xs font-medium border;
-  }
-
-  .paper-tooltip {
-    @apply absolute z-50 px-2.5 py-1.5 rounded-md
-           bg-ink-900 text-paper-50 font-sans text-xs
-           shadow-lg pointer-events-none
-           animate-fade-in;
-  }
-
-  .paper-toast {
-    @apply flex items-center gap-3 px-4 py-3 rounded-lg
-           bg-paper-50 border border-ink-200 shadow-paper-lg
-           font-sans text-sm text-ink-800
-           animate-slide-up;
-  }
-
-  .paper-modal-overlay {
-    @apply fixed inset-0 z-50 flex items-center justify-center
-           bg-ink-900/30 backdrop-blur-sm
-           animate-fade-in;
-  }
-
-  .paper-modal {
-    @apply w-full max-w-lg mx-4 p-6
-           bg-paper-50 border border-ink-200 rounded-xl shadow-paper-2xl
-           animate-scale-in;
-  }
-
-  .paper-nav-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-md
-           font-sans text-sm text-ink-600
-           hover:bg-ink-100 hover:text-ink-900
-           active:bg-ink-200
-           transition-all duration-150 ease-out
-           cursor-pointer select-none;
-  }
-
-  .paper-nav-item-active {
-    @apply bg-ink-900 text-paper-50 hover:bg-ink-800;
-  }
-
-  /* Paper texture overlay for special cards */
-  .paper-texture {
+  /* Ruled notebook paper: horizontal lines + red margin. */
+  .sheet-ruled {
     background-image:
-      linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.01) 50%, transparent 100%),
+      linear-gradient(
+        to right,
+        transparent calc(var(--margin-x) - 1px),
+        theme("colors.rule.margin") calc(var(--margin-x) - 1px),
+        theme("colors.rule.margin") var(--margin-x),
+        transparent var(--margin-x)
+      ),
       repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 28px,
-        rgba(0, 0, 0, 0.03) 28px,
-        rgba(0, 0, 0, 0.03) 29px
+        to bottom,
+        transparent 0,
+        transparent calc(var(--rule-height) - 1px),
+        theme("colors.rule.DEFAULT") calc(var(--rule-height) - 1px),
+        theme("colors.rule.DEFAULT") var(--rule-height)
       );
+    background-position: 0 0, 0 8px;
   }
 
-  /* Lined paper effect */
-  .paper-lined {
+  /* Graph/dot paper, for panels that hold non-list content. */
+  .sheet-dotted {
+    background-image: radial-gradient(circle, rgba(80, 110, 150, 0.22) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .sheet-grid {
     background-image:
-      repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 31px,
-        rgba(0, 0, 0, 0.06) 31px,
-        rgba(0, 0, 0, 0.06) 32px
-      );
-    background-position: 0 8px;
+      linear-gradient(to right, rgba(120, 150, 190, 0.14) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(120, 150, 190, 0.14) 1px, transparent 1px);
+    background-size: 22px 22px;
   }
 
-  /* Dotted paper effect */
-  .paper-dotted {
-    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
-    background-size: 20px 20px;
+  /* A torn-off strip: ragged bottom edge. */
+  .sheet-torn {
+    -webkit-mask-image: linear-gradient(#000 0 0), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='10' preserveAspectRatio='none'%3E%3Cpath d='M0,10 L0,4 Q6,1 12,4 T24,4 T36,3 T48,5 T60,3 T72,5 T84,3 T96,5 T108,3 T120,4 L120,10 Z' fill='%23000'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% calc(100% - 10px), 120px 10px;
+    -webkit-mask-position: top left, bottom left;
+    -webkit-mask-repeat: no-repeat, repeat-x;
+    mask-image: linear-gradient(#000 0 0), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='10' preserveAspectRatio='none'%3E%3Cpath d='M0,10 L0,4 Q6,1 12,4 T24,4 T36,3 T48,5 T60,3 T72,5 T84,3 T96,5 T108,3 T120,4 L120,10 Z' fill='%23000'/%3E%3C/svg%3E");
+    mask-size: 100% calc(100% - 10px), 120px 10px;
+    mask-position: top left, bottom left;
+    mask-repeat: no-repeat, repeat-x;
+  }
+
+  /* A stack of sheets — edges peeking out beneath. */
+  .sheet-stack {
+    box-shadow: theme("boxShadow.stack");
+  }
+
+  /* Punched holes down the left edge of a bound page. */
+  .sheet-punched::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    pointer-events: none;
+    background-image: radial-gradient(
+      circle at 7px 7px,
+      rgba(150, 130, 96, 0.35) 0 6px,
+      rgba(255, 253, 247, 0.9) 6px 7px,
+      transparent 7px
+    );
+    background-size: 14px 92px;
+    background-repeat: repeat-y;
+    background-position: 0 34px;
+  }
+
+  /* Sticky note. */
+  .sticky-note {
+    position: relative;
+    background: theme("colors.sticky.yellow");
+    box-shadow: theme("boxShadow.sticky");
+    background-image: linear-gradient(160deg, rgba(255, 255, 255, 0.45) 0%, transparent 42%);
+  }
+
+  /* Curled bottom-right corner. */
+  .sticky-note::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.1) 50%, rgba(255, 255, 255, 0.6) 52%);
+  }
+
+  /* A strip of masking tape. */
+  .tape {
+    position: absolute;
+    width: 76px;
+    height: 24px;
+    background: rgba(255, 250, 220, 0.62);
+    border-left: 1px dashed rgba(180, 160, 110, 0.35);
+    border-right: 1px dashed rgba(180, 160, 110, 0.35);
+    box-shadow: 0 1px 3px rgba(72, 58, 32, 0.14);
+    backdrop-filter: saturate(0.7) brightness(1.03);
+  }
+
+  /* A coffee ring someone left on the page. */
+  .coffee-ring {
+    position: absolute;
+    border-radius: 9999px;
+    border: 3px solid rgba(150, 105, 55, 0.13);
+    box-shadow: inset 0 0 12px rgba(150, 105, 55, 0.07);
+    pointer-events: none;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Hand-drawn controls
+   * ------------------------------------------------------------------ */
+
+  /* A box drawn quickly with a pen — uneven corners, slightly off-square. */
+  .sketch-box {
+    border: 2px solid theme("colors.ink.800");
+    border-radius: theme("borderRadius.sketch");
+  }
+
+  .btn-pen {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-hand text-lg leading-none;
+    color: theme("colors.paper.50");
+    background: theme("colors.ink.800");
+    border: 2px solid theme("colors.ink.900");
+    border-radius: theme("borderRadius.sketch");
+    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.14s ease, background 0.14s ease;
+    box-shadow: 2px 2px 0 rgba(24, 43, 70, 0.25);
+  }
+
+  .btn-pen:hover:not(:disabled) {
+    background: theme("colors.ink.900");
+    transform: translate(-1px, -1px) rotate(-0.4deg);
+    box-shadow: 3px 3px 0 rgba(24, 43, 70, 0.3);
+  }
+
+  .btn-pen:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: 0 0 0 rgba(24, 43, 70, 0.25);
+  }
+
+  .btn-pen:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 font-hand text-lg leading-none;
+    color: theme("colors.ink.800");
+    background: transparent;
+    border: 2px solid theme("colors.ink.400");
+    border-radius: theme("borderRadius.sketch-alt");
+    transition: transform 0.14s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.14s ease, background 0.14s ease;
+  }
+
+  .btn-outline:hover:not(:disabled) {
+    border-color: theme("colors.ink.800");
+    background: rgba(31, 58, 95, 0.05);
+    transform: rotate(-0.4deg);
+  }
+
+  .btn-outline:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 py-1.5 font-hand text-lg leading-none;
+    color: theme("colors.ink.600");
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: theme("borderRadius.sketch");
+    transition: color 0.14s ease, background 0.14s ease;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    color: theme("colors.ink.900");
+    background: rgba(31, 58, 95, 0.07);
+  }
+
+  .btn-red {
+    color: theme("colors.redpen.500");
+    border-color: theme("colors.redpen.300");
+  }
+
+  .btn-red:hover:not(:disabled) {
+    background: theme("colors.redpen.100");
+    border-color: theme("colors.redpen.500");
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Writing on the page
+   * ------------------------------------------------------------------ */
+
+  /* An input that looks like writing on a ruled line, not a form field. */
+  .write-line {
+    @apply w-full bg-transparent font-note text-ink-800 px-1 py-1;
+    border: 0;
+    border-bottom: 2px solid theme("colors.ink.200");
+    border-radius: 0;
+    transition: border-color 0.16s ease, background 0.16s ease;
+  }
+
+  .write-line::placeholder {
+    color: theme("colors.pencil.300");
+    font-style: italic;
+  }
+
+  .write-line:focus {
+    outline: none;
+    border-bottom-color: theme("colors.ink.700");
+    background: rgba(253, 243, 167, 0.22);
+  }
+
+  /* A boxed field for forms that genuinely need one. */
+  .write-box {
+    @apply w-full bg-paper-50/70 font-note text-ink-800 px-3 py-2;
+    border: 2px solid theme("colors.ink.200");
+    border-radius: theme("borderRadius.sketch");
+    transition: border-color 0.16s ease, background 0.16s ease;
+  }
+
+  .write-box::placeholder {
+    color: theme("colors.pencil.300");
+    font-style: italic;
+  }
+
+  .write-box:focus {
+    outline: none;
+    border-color: theme("colors.ink.700");
+    background: theme("colors.paper.50");
+  }
+
+  /* Highlighter swipe behind text — uneven, like a real marker pass. */
+  .highlight {
+    background-image: linear-gradient(
+      104deg,
+      transparent 0.5%,
+      theme("colors.marker.yellow") 2%,
+      theme("colors.marker.yellow") 96%,
+      transparent 98.5%
+    );
+    border-radius: 0.4em;
+    padding: 0.06em 0.28em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .highlight-green {
+    background-image: linear-gradient(
+      104deg,
+      transparent 0.5%,
+      theme("colors.marker.green") 2%,
+      theme("colors.marker.green") 96%,
+      transparent 98.5%
+    );
+  }
+
+  .highlight-pink {
+    background-image: linear-gradient(
+      104deg,
+      transparent 0.5%,
+      theme("colors.marker.pink") 2%,
+      theme("colors.marker.pink") 96%,
+      transparent 98.5%
+    );
+  }
+
+  /* A rubber stamp — for statuses like DONE or OVERDUE. */
+  .stamp {
+    @apply inline-flex items-center gap-1 font-type uppercase tracking-widest;
+    font-size: 9px;
+    padding: 2px 7px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    transform: rotate(-3deg);
+    opacity: 0.82;
+  }
+
+  .stamp-red {
+    color: theme("colors.redpen.500");
+    border-color: theme("colors.redpen.400");
+    background: rgba(251, 228, 224, 0.5);
+  }
+
+  .stamp-green {
+    color: theme("colors.greenpen");
+    border-color: theme("colors.greenpen");
+    background: rgba(201, 237, 207, 0.45);
+  }
+
+  .stamp-ink {
+    color: theme("colors.ink.600");
+    border-color: theme("colors.ink.300");
+    background: rgba(227, 232, 239, 0.5);
+  }
+
+  .stamp-pencil {
+    color: theme("colors.pencil.400");
+    border-color: theme("colors.pencil.200");
+    background: transparent;
+  }
+
+  /* A small annotation in the margin. */
+  .margin-note {
+    @apply font-hand text-redpen-400;
+    transform: rotate(-2deg);
+  }
+
+  /* Underline drawn by hand, used under section headings. */
+  .pen-underline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .pen-underline::after {
+    content: "";
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: -5px;
+    height: 6px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='6' preserveAspectRatio='none'%3E%3Cpath d='M1,4 C40,1.5 70,5 110,2.5 S170,4.5 199,2' stroke='%231f3a5f' stroke-width='1.8' fill='none' stroke-linecap='round' opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 100% 6px;
+    background-repeat: no-repeat;
+  }
+
+  /* Dashed cut-here divider. */
+  .cut-line {
+    height: 1px;
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba(120, 100, 70, 0.35) 0 8px,
+      transparent 8px 16px
+    );
+  }
+
+  /* Blinking pen cursor for "thinking" states. */
+  .pen-cursor::after {
+    content: "|";
+    @apply animate-pen-blink text-ink-500;
+    margin-left: 1px;
   }
 }
 
@@ -195,13 +447,38 @@
     text-wrap: balance;
   }
 
-  .animate-in {
-    animation: slideUp 0.3s ease-out;
+  /* Small random-feeling tilts so rows of cards don't look machine-set. */
+  .tilt-a {
+    transform: rotate(-0.35deg);
+  }
+  .tilt-b {
+    transform: rotate(0.4deg);
+  }
+  .tilt-c {
+    transform: rotate(-0.2deg);
   }
 
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.1s; }
-  .stagger-3 { animation-delay: 0.15s; }
-  .stagger-4 { animation-delay: 0.2s; }
-  .stagger-5 { animation-delay: 0.25s; }
+  .stagger-1 { animation-delay: 0.04s; }
+  .stagger-2 { animation-delay: 0.08s; }
+  .stagger-3 { animation-delay: 0.12s; }
+  .stagger-4 { animation-delay: 0.16s; }
+  .stagger-5 { animation-delay: 0.2s; }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

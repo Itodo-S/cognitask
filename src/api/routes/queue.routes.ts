@@ -31,8 +31,8 @@ export async function queueRoutes(app: FastifyInstance) {
   app.post("/api/queue/set", async (request, reply) => {
     const body = z.object({ orderedIds: z.array(z.string()).min(1) }).parse(request.body);
 
-    for (let i = 0; i < body.orderedIds.length; i++) {
-      const [todo] = await db.select().from(schema.todos).where(eq(schema.todos.id, body.orderedIds[i]));
+    for (const [i, todoId] of body.orderedIds.entries()) {
+      const [todo] = await db.select().from(schema.todos).where(eq(schema.todos.id, todoId));
       if (!todo) continue;
 
       const meta = todo.aiMetadata ? JSON.parse(todo.aiMetadata) : {};
@@ -42,7 +42,7 @@ export async function queueRoutes(app: FastifyInstance) {
           aiMetadata: JSON.stringify({ ...meta, queueOrder: i }),
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(schema.todos.id, body.orderedIds[i]));
+        .where(eq(schema.todos.id, todoId));
     }
 
     return reply.send(success({ count: body.orderedIds.length }, "Queue order updated"));

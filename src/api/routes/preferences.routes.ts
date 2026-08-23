@@ -64,7 +64,7 @@ export async function preferencesRoutes(app: FastifyInstance) {
 
   
   app.put("/api/preferences", async (request, reply) => {
-    const body = z.record(z.unknown()).parse(request.body);
+    const body = z.record(z.string(), z.unknown()).parse(request.body);
 
     for (const [key, value] of Object.entries(body)) {
       const stringValue = JSON.stringify(value);

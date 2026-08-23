@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function dashboardRoutes(app: FastifyInstance) {
@@ -37,7 +36,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
 
     for (const t of allTodos) {
       if (t.status === "pending" || t.status === "in_progress") {
-        if (t.priority in priorityBreakdown) priorityBreakdown[t.priority]++;
+        priorityBreakdown[t.priority] = (priorityBreakdown[t.priority] ?? 0) + 1;
         const cat = t.category ?? "uncategorized";
         categoryBreakdown[cat] = (categoryBreakdown[cat] ?? 0) + 1;
       }

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { WebSocket } from "ws";
+import type {} from "@fastify/websocket";
 
 type EventData = {
   event: string;

@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function statsV2Routes(app: FastifyInstance) {

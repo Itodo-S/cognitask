@@ -1,71 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { clsx } from "clsx";
 
 interface TooltipProps {
-  children: React.ReactNode;
   content: string;
-  side?: "top" | "bottom" | "left" | "right";
+  children: React.ReactNode;
+  side?: "top" | "bottom";
   className?: string;
 }
 
-export function Tooltip({ children, content, side = "top", className }: TooltipProps) {
+/** A pencilled aside that appears next to whatever you're hovering. */
+export function Tooltip({ content, children, side = "top", className }: TooltipProps) {
   const [show, setShow] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-
-  const handleEnter = () => {
-    timeoutRef.current = setTimeout(() => setShow(true), 400);
-  };
-
-  const handleLeave = () => {
-    clearTimeout(timeoutRef.current);
-    setShow(false);
-  };
-
-  useEffect(() => () => clearTimeout(timeoutRef.current), []);
-
-  const positionClasses = {
-    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
-    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
-    left: "right-full top-1/2 -translate-y-1/2 mr-2",
-    right: "left-full top-1/2 -translate-y-1/2 ml-2",
-  };
 
   return (
-    <div
-      className="relative inline-flex"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
-      onFocus={handleEnter}
-      onBlur={handleLeave}
+    <span
+      className={clsx("relative inline-flex", className)}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onFocus={() => setShow(true)}
+      onBlur={() => setShow(false)}
     >
       {children}
       {show && (
-        <div
+        <span
           role="tooltip"
           className={clsx(
-            "absolute z-50 px-2.5 py-1.5 rounded-md",
-            "bg-ink-900 text-paper-50 font-sans text-xs",
-            "shadow-lg pointer-events-none",
-            "whitespace-nowrap",
-            "animate-fade-in",
-            positionClasses[side],
-            className
+            "pointer-events-none absolute left-1/2 z-50 -translate-x-1/2 whitespace-nowrap",
+            "animate-fade-in rounded-[2px] bg-ink-900/95 px-2 py-1 font-type text-[10px] tracking-wide text-paper-100 shadow-sheet-md",
+            side === "top" ? "bottom-full mb-1.5" : "top-full mt-1.5"
           )}
         >
           {content}
-          <div
-            className={clsx(
-              "absolute w-2 h-2 bg-ink-900 rotate-45",
-              side === "top" && "top-full left-1/2 -translate-x-1/2 -mt-1",
-              side === "bottom" && "bottom-full left-1/2 -translate-x-1/2 mb-1",
-              side === "left" && "left-full top-1/2 -translate-y-1/2 -ml-1",
-              side === "right" && "right-full top-1/2 -translate-y-1/2 -mr-1"
-            )}
-          />
-        </div>
+        </span>
       )}
-    </div>
+    </span>
   );
 }

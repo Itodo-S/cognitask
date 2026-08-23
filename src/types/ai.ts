@@ -4,19 +4,33 @@ export interface DecomposeRequest {
   maxTasks?: number;
 }
 
-export interface DecomposeResult {
-  sessionId: string;
-  todos: DecomposedTodo[];
-  summary: string;
-}
-
 export interface DecomposedTodo {
   title: string;
   description: string;
   priority: "low" | "medium" | "high" | "urgent";
   category: string;
   estimatedMinutes?: number;
-  dependencies?: number[];
+  /** Tickable sub-steps; empty when the task is atomic. */
+  checklist?: string[];
+  /** Zero-based indexes into the same task array. */
+  dependsOn?: number[];
+  dueOffsetDays?: number | null;
+  tags?: string[];
+}
+
+export interface PlanRisk {
+  risk: string;
+  mitigation: string;
+}
+
+export interface DecomposeResult {
+  sessionId: string;
+  todos: DecomposedTodo[];
+  summary: string;
+  firstAction?: string;
+  assumptions?: string[];
+  risks?: PlanRisk[];
+  totalEstimatedMinutes?: number;
 }
 
 export interface CategorizeRequest {
@@ -47,12 +61,32 @@ export interface SuggestRequest {
   context?: string;
 }
 
+export type SuggestionKind =
+  | "next_action"
+  | "unblock"
+  | "break_down"
+  | "new_task"
+  | "defer"
+  | "cleanup";
+
 export interface SuggestionResult {
+  kind: SuggestionKind;
   title: string;
   description: string;
+  reason: string;
   priority: string;
   category: string;
-  reason: string;
+  estimatedMinutes?: number;
+  checklist?: string[];
+  relatedTodoId?: string | null;
+  confidence: number;
+}
+
+export interface SuggestionsPayload {
+  briefing: string;
+  focusTodoId?: string | null;
+  focusReason?: string | null;
+  suggestions: SuggestionResult[];
 }
 
 export interface EstimateRequest {
@@ -65,6 +99,23 @@ export interface EstimateResult {
   estimatedMinutes: number;
   complexity: "simple" | "moderate" | "complex";
   reasoning: string;
+}
+
+export interface RefineResult {
+  improvedTitle: string;
+  titleChanged?: boolean;
+  suggestedDescription: string;
+  suggestedPriority: string;
+  suggestedCategory: string;
+  estimatedMinutes?: number;
+  checklist: string[];
+  clarifyingQuestion?: string | null;
+  rationale: string;
+}
+
+export interface ChecklistSuggestion {
+  items: string[];
+  note?: string;
 }
 
 export interface AgentEvent {

@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { todoService } from "../../services/todo.service.js";
 import { success, error } from "../../utils/helpers.js";
-import { z } from "zod";
 
 export async function templateRoutes(app: FastifyInstance) {
   

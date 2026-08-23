@@ -1,6 +1,5 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function dailyDigestRoutes(app: FastifyInstance) {
@@ -26,7 +25,7 @@ export async function dailyDigestRoutes(app: FastifyInstance) {
 
     const priorityBreakdown: Record<string, number> = { urgent: 0, high: 0, medium: 0, low: 0 };
     for (const t of active) {
-      if (t.priority in priorityBreakdown) priorityBreakdown[t.priority]++;
+      priorityBreakdown[t.priority] = (priorityBreakdown[t.priority] ?? 0) + 1;
     }
 
     return reply.send(

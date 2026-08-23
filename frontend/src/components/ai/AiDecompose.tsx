@@ -2,157 +2,285 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/Card";
+import { clsx } from "clsx";
 import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Input";
+import { FieldLabel, StickyNote } from "@/components/ui/Paper";
+import { InkCheck } from "@/components/ui/InkCheck";
 import { useToast } from "@/components/ui/Toast";
 import { aiApi } from "@/lib/api";
 import { useTodoStore } from "@/stores/todoStore";
-import type { DecomposedTodo } from "@/types";
+import type { AiDecomposeResponse, DecomposedTodo } from "@/types";
 
+function minutesLabel(m?: number) {
+  if (!m) return null;
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  const rest = m % 60;
+  return rest ? `${h}h ${rest}m` : `${h}h`;
+}
+
+/** Planning a goal: you write the goal, the page fills with the plan. */
 export function AiDecompose() {
   const [goal, setGoal] = useState("");
-  const [tasks, setTasks] = useState<DecomposedTodo[]>([]);
-  const [summary, setSummary] = useState("");
+  const [context, setContext] = useState("");
+  const [plan, setPlan] = useState<AiDecomposeResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { toast } = useToast();
-  const createTodo = useTodoStore((s) => s.createTodo);
+  const [taken, setTaken] = useState<Set<number>>(new Set());
 
-  const decompose = async () => {
+  const { toast } = useToast();
+  const { createTodo, fetchTodos } = useTodoStore();
+
+  const run = async () => {
     if (!goal.trim()) return;
     setLoading(true);
+    setPlan(null);
+    setTaken(new Set());
     try {
-      const data = await aiApi.decompose(goal.trim());
-      setTasks(data.todos ?? []);
-      setSummary(data.summary ?? "");
-    } catch {
-      toast("Failed to decompose goal", "error");
+      setPlan(await aiApi.decompose(goal.trim(), context.trim() || undefined));
+    } catch (e) {
+      toast((e as Error).message || "Couldn't draw up a plan", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const addAll = async () => {
-    setAdding(true);
-    let added = 0;
-    for (const t of tasks) {
-      try {
-        await createTodo({
-          title: t.title,
-          description: t.description,
-          priority: t.priority,
-          category: t.category,
-        });
-        added++;
-      } catch {  }
-    }
-    toast(`Added ${added} tasks`);
-    setTasks([]);
-    setGoal("");
-    setSummary("");
-    setAdding(false);
-  };
-
-  const addSingle = async (t: DecomposedTodo) => {
+  const save = async (task: DecomposedTodo, index: number) => {
     try {
       await createTodo({
-        title: t.title,
-        description: t.description,
-        priority: t.priority,
-        category: t.category,
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        category: task.category,
+        checklist: task.checklist?.length ? task.checklist : undefined,
+        dueDate:
+          typeof task.dueOffsetDays === "number"
+            ? new Date(Date.now() + task.dueOffsetDays * 86400000).toISOString()
+            : undefined,
+        tags: task.tags?.length ? task.tags : undefined,
       });
-      toast(`Added: ${t.title}`);
-      setTasks((prev) => prev.filter((x) => x !== t));
+      setTaken((prev) => new Set(prev).add(index));
+      toast(`Copied over: ${task.title}`);
     } catch {
-      toast("Failed to add task", "error");
+      toast("Couldn't copy that one over", "error");
+    }
+  };
+
+  const saveAll = async () => {
+    if (!plan) return;
+    setAdding(true);
+    try {
+      // Re-run server-side so dependencies become real parent/child links.
+      const result = await aiApi.decompose(goal.trim(), context.trim() || undefined, true);
+      await fetchTodos();
+      toast(`Copied ${result.savedIds?.length ?? 0} tasks onto the list`);
+      setPlan(null);
+      setGoal("");
+      setContext("");
+    } catch {
+      toast("Couldn't copy the plan over", "error");
+    } finally {
+      setAdding(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Textarea
-          label="Describe your goal"
-          placeholder="e.g. Launch a personal blog by next month..."
-          value={goal}
-          onChange={(e) => setGoal(e.target.value)}
-          rows={3}
-        />
-        <div className="mt-2 flex justify-end">
-          <Button onClick={decompose} disabled={loading || !goal.trim()}>
-            {loading ? "Decomposing..." : "Break Down Goal"}
+    <div className="space-y-6">
+      <div className="space-y-3">
+        <div>
+          <FieldLabel htmlFor="goal">What are you trying to get done?</FieldLabel>
+          <textarea
+            id="goal"
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            placeholder="launch a small paid newsletter about urban gardening…"
+            rows={2}
+            className="write-line mt-1 resize-none font-hand text-[24px] leading-snug"
+          />
+        </div>
+
+        <div>
+          <FieldLabel htmlFor="ctx">Anything I should know? (optional)</FieldLabel>
+          <input
+            id="ctx"
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && run()}
+            placeholder="budget, deadline, who else is involved…"
+            className="write-line mt-1 text-[16px]"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <Button onClick={run} disabled={loading || !goal.trim()}>
+            {loading ? <span className="pen-cursor">Working it out</span> : "Draw up a plan"}
           </Button>
         </div>
       </div>
 
-      {summary && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-paper-100 border border-ink-200/60 rounded-xl px-4 py-3"
-        >
-          <p className="font-sans text-xs text-ink-500 italic">{summary}</p>
-        </motion.div>
+      {loading && (
+        <div className="space-y-2 py-4">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="h-4 rounded-full bg-pencil-100"
+              style={{ width: `${88 - i * 16}%` }}
+              animate={{ opacity: [0.35, 0.75, 0.35] }}
+              transition={{ duration: 1.3, repeat: Infinity, delay: i * 0.18 }}
+            />
+          ))}
+        </div>
       )}
 
-      <AnimatePresence mode="popLayout">
-        {tasks.map((t, i) => (
+      <AnimatePresence>
+        {plan && (
           <motion.div
-            key={`${t.title}-${i}`}
-            initial={{ opacity: 0, y: 12, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ delay: i * 0.06, type: "spring", stiffness: 300, damping: 25 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-5"
           >
-            <Card className="group">
-              <CardContent>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-sans text-xs text-ink-400 font-mono">#{i + 1}</span>
-                      <h3 className="font-serif text-sm font-medium text-ink-900">{t.title}</h3>
-                    </div>
-                    <p className="font-sans text-xs text-ink-500 mt-1">{t.description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="paper-badge bg-ink-100 text-ink-600 border-ink-300">{t.priority}</span>
-                      {t.category && (
-                        <span className="paper-badge bg-paper-100 text-ink-500 border-ink-200">{t.category}</span>
-                      )}
-                      {t.estimatedMinutes && (
-                        <span className="font-sans text-[11px] text-ink-400">~{t.estimatedMinutes}min</span>
-                      )}
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => addSingle(t)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                      <path d="M7 2v10M2 7h10" />
-                    </svg>
-                    Add
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+            {/* The approach, in the assistant's own hand. */}
+            <div className="border-l-[3px] border-marker-yellow pl-4">
+              <p className="font-note text-[16px] leading-relaxed text-ink-700">{plan.summary}</p>
+            </div>
 
-      {tasks.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex justify-end"
-        >
-          <Button onClick={addAll} disabled={adding}>
-            {adding ? "Adding..." : `Add All ${tasks.length} Tasks`}
-          </Button>
-        </motion.div>
-      )}
+            {plan.firstAction && (
+              <StickyNote tone="green" tilt="a" className="max-w-md">
+                <p className="font-type text-[9px] uppercase tracking-[0.16em] text-greenpen">
+                  start here
+                </p>
+                <p className="mt-1 font-hand text-[20px] leading-snug text-ink-900">
+                  {plan.firstAction}
+                </p>
+              </StickyNote>
+            )}
+
+            {plan.assumptions && plan.assumptions.length > 0 && (
+              <div>
+                <p className="font-type text-[9px] uppercase tracking-[0.16em] text-pencil-400">
+                  assuming
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {plan.assumptions.map((a, i) => (
+                    <li key={i} className="font-note text-[15px] leading-snug text-pencil-500">
+                      — {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="cut-line" />
+
+            {/* The plan itself. */}
+            <ol className="space-y-3">
+              {plan.todos.map((task, i) => {
+                const isTaken = taken.has(i);
+                return (
+                  <motion.li
+                    key={`${task.title}-${i}`}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={clsx(
+                      "group relative border-b border-dashed border-rule-soft pb-3",
+                      isTaken && "opacity-45"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span className="mt-1 font-hand text-[19px] leading-none text-pencil-300">
+                        {i + 1}.
+                      </span>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <h3 className="font-hand text-[21px] leading-tight text-ink-900">
+                            {task.title}
+                          </h3>
+                          {task.priority === "urgent" && (
+                            <span className="stamp stamp-red">urgent</span>
+                          )}
+                          {minutesLabel(task.estimatedMinutes) && (
+                            <span className="font-type text-[10px] tracking-wide text-pencil-400">
+                              ~{minutesLabel(task.estimatedMinutes)}
+                            </span>
+                          )}
+                          {task.dependsOn && task.dependsOn.length > 0 && (
+                            <span className="font-type text-[10px] tracking-wide text-pencil-300">
+                              after {task.dependsOn.map((d) => d + 1).join(", ")}
+                            </span>
+                          )}
+                          {task.category && (
+                            <span className="font-type text-[10px] lowercase text-ink-400">
+                              #{task.category}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-0.5 font-note text-[15px] leading-relaxed text-pencil-500">
+                          {task.description}
+                        </p>
+
+                        {task.checklist && task.checklist.length > 0 && (
+                          <ul className="mt-1.5 space-y-0.5">
+                            {task.checklist.map((line, j) => (
+                              <li key={j} className="flex items-start gap-2">
+                                <InkCheck size="sm" state="empty" className="mt-[3px] opacity-45" />
+                                <span className="font-note text-[15px] leading-snug text-ink-600">
+                                  {line}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => save(task, i)}
+                        disabled={isTaken}
+                        className="flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
+                      >
+                        {isTaken ? "✓" : "+ copy"}
+                      </Button>
+                    </div>
+                  </motion.li>
+                );
+              })}
+            </ol>
+
+            {plan.risks && plan.risks.length > 0 && (
+              <div className="space-y-2">
+                <p className="font-type text-[9px] uppercase tracking-[0.16em] text-redpen-400">
+                  what usually goes wrong
+                </p>
+                {plan.risks.map((r, i) => (
+                  <div key={i} className="border-l-[3px] border-redpen-200 pl-3">
+                    <p className="font-note text-[15px] leading-snug text-ink-700">{r.risk}</p>
+                    <p className="mt-0.5 font-note text-[14px] leading-snug text-greenpen">
+                      → {r.mitigation}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-3 pt-1">
+              {plan.totalEstimatedMinutes ? (
+                <span className="font-type text-[10px] uppercase tracking-widest text-pencil-400">
+                  about {minutesLabel(plan.totalEstimatedMinutes)} in total
+                </span>
+              ) : (
+                <span />
+              )}
+              <Button onClick={saveAll} disabled={adding}>
+                {adding ? "Copying…" : `Copy all ${plan.todos.length} onto the list`}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { desc, sql, and, gte } from "drizzle-orm";
+import { desc, sql, and } from "drizzle-orm";
 import { db, schema } from "../db/client.js";
 import type { TodoStats } from "../types/todo.js";
 
@@ -32,7 +32,7 @@ export class StatsService {
           archived++;
           break;
       }
-      if (todo.priority in byPriority) byPriority[todo.priority]++;
+      byPriority[todo.priority] = (byPriority[todo.priority] ?? 0) + 1;
       const cat = todo.category ?? "uncategorized";
       byCategory[cat] = (byCategory[cat] ?? 0) + 1;
     }

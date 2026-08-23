@@ -3,17 +3,19 @@ import { Button } from "@/components/ui/Button";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-col items-center justify-center py-24 text-center">
-      <div className="w-16 h-16 mb-6 bg-ink-100 rounded-full flex items-center justify-center">
-        <span className="font-serif text-2xl font-bold text-ink-400">404</span>
-      </div>
-      <h2 className="font-serif text-xl font-semibold text-ink-900 mb-2">Page not found</h2>
-      <p className="font-sans text-sm text-ink-500 mb-6 max-w-md">
-        The page you&apos;re looking for doesn&apos;t exist or has been moved.
+    <div className="flex flex-col items-center justify-center py-20 text-center">
+      <p className="font-hand text-[52px] leading-none text-pencil-300">404</p>
+      <p className="mt-3 font-hand text-[28px] leading-tight text-ink-900">
+        That page was never written.
       </p>
-      <Link href="/">
-        <Button>Back to Dashboard</Button>
-      </Link>
+      <p className="mt-2 max-w-md font-note text-[16px] text-pencil-400">
+        Nothing here — try the front page.
+      </p>
+      <div className="mt-6">
+        <Link href="/">
+          <Button>Back to today</Button>
+        </Link>
+      </div>
     </div>
   );
 }

@@ -6,15 +6,16 @@ interface HeaderProps {
   action?: React.ReactNode;
 }
 
+/** The heading you'd write at the top of a fresh page, then underline. */
 export function Header({ title, subtitle, action }: HeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="font-serif text-2xl sm:text-3xl font-semibold text-ink-900 tracking-tight">
-          {title}
+        <h1 className="font-hand text-[38px] leading-none text-ink-900 sm:text-[44px]">
+          <span className="pen-underline">{title}</span>
         </h1>
         {subtitle && (
-          <p className="font-sans text-sm text-ink-500 mt-1">{subtitle}</p>
+          <p className="mt-3 font-note text-[15px] text-pencil-400">{subtitle}</p>
         )}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}

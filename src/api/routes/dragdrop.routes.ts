@@ -14,9 +14,8 @@ export async function dragDropRoutes(app: FastifyInstance) {
       .parse(request.body);
 
     
-    for (let i = 0; i < body.todoIds.length; i++) {
-      const timestamp = new Date(Date.now() + i).toISOString();
-      await todoService.update(body.todoIds[i], {
+    for (const [i, todoId] of body.todoIds.entries()) {
+      await todoService.update(todoId, {
         aiMetadata: JSON.stringify({ order: i }),
       } as any);
     }

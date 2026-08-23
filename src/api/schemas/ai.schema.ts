@@ -3,7 +3,7 @@ import { z } from "zod";
 export const decomposeSchema = z.object({
   goal: z.string().min(1).max(2000),
   context: z.string().max(2000).optional(),
-  maxTasks: z.number().min(1).max(50).optional().default(15),
+  maxTasks: z.number().min(1).max(20).optional().default(6),
   saveTasks: z.boolean().optional().default(false),
 });
 

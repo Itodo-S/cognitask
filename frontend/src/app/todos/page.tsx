@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { Button } from "@/components/ui/Button";
 import { TodoCard, TodoForm, TodoFilters } from "@/components/todos";
@@ -8,52 +9,77 @@ import { useTodoStore } from "@/stores/todoStore";
 
 export default function TodosPage() {
   const [showForm, setShowForm] = useState(false);
-  const { todos, loading, fetchTodos } = useTodoStore();
+  const { todos, loading, error, fetchTodos } = useTodoStore();
 
   useEffect(() => {
     fetchTodos();
   }, [fetchTodos]);
 
-  const filtered = todos;
+  const open = todos.filter((t) => t.status !== "completed");
+  const done = todos.filter((t) => t.status === "completed");
 
   return (
     <div>
       <Header
-        title="Tasks"
-        subtitle={`${todos.length} task${todos.length !== 1 ? "s" : ""}`}
-        action={
-          <Button onClick={() => setShowForm(true)}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M7 2v10M2 7h10" />
-            </svg>
-            New Task
-          </Button>
+        title="The List"
+        subtitle={
+          loading
+            ? "turning the page…"
+            : `${open.length} still to do${done.length ? ` · ${done.length} crossed off` : ""}`
         }
+        action={<Button onClick={() => setShowForm(true)}>+ Write one down</Button>}
       />
 
       <TodoFilters />
 
+      {error && (
+        <p className="mb-4 font-hand text-[19px] text-redpen-500">
+          {error} — is the backend running?
+        </p>
+      )}
+
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="h-16 bg-paper-100 rounded-lg animate-pulse" />
+        <div className="space-y-3 py-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-6 animate-pulse rounded-full bg-pencil-100"
+              style={{ width: `${92 - i * 9}%` }}
+            />
           ))}
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16">
-          <svg className="mx-auto mb-4 text-ink-300" width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <rect x="8" y="4" width="32" height="40" rx="4" />
-            <path d="M16 16h16M16 24h16M16 32h8" />
-          </svg>
-          <p className="font-serif text-lg text-ink-400 mb-2">No tasks yet</p>
-          <p className="font-sans text-sm text-ink-400 mb-4">Create your first task to get started</p>
-          <Button onClick={() => setShowForm(true)}>Create Task</Button>
+      ) : todos.length === 0 ? (
+        <div className="py-16 text-center">
+          <p className="font-hand text-[30px] leading-tight text-pencil-300">
+            A blank page.
+          </p>
+          <p className="mt-2 font-note text-[16px] text-pencil-400">
+            Write the first thing down — you can add steps inside it, or not.
+          </p>
+          <div className="mt-5">
+            <Button onClick={() => setShowForm(true)}>Start the list</Button>
+          </div>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((todo) => (
-            <TodoCard key={todo.id} todo={todo} />
-          ))}
+        <div className="space-y-1">
+          <AnimatePresence initial={false}>
+            {open.map((todo, i) => (
+              <TodoCard key={todo.id} todo={todo} index={i} />
+            ))}
+          </AnimatePresence>
+
+          {done.length > 0 && (
+            <div className="pt-6">
+              <p className="mb-1 font-type text-[9px] uppercase tracking-[0.2em] text-pencil-300">
+                crossed off
+              </p>
+              <AnimatePresence initial={false}>
+                {done.map((todo, i) => (
+                  <TodoCard key={todo.id} todo={todo} index={i} />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       )}
 

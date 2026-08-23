@@ -7,17 +7,23 @@ import type {
   PrioritizeResult,
   SuggestRequest,
   SuggestionResult,
+  SuggestionsPayload,
   EstimateRequest,
   EstimateResult,
+  RefineResult,
+  ChecklistSuggestion,
   AgentEvent,
 } from "../types/ai.js";
+import type { TodoWithSubtasks } from "../types/todo.js";
 
 export interface AIService {
   decompose(request: DecomposeRequest): AsyncGenerator<AgentEvent, DecomposeResult>;
   categorize(request: CategorizeRequest): Promise<CategorizeResult>;
   prioritize(request: PrioritizeRequest): Promise<PrioritizeResult>;
-  suggest(request: SuggestRequest): Promise<SuggestionResult[]>;
+  suggest(request: SuggestRequest): Promise<SuggestionsPayload>;
   estimate(request: EstimateRequest): Promise<EstimateResult>;
+  refine(todo: TodoWithSubtasks): Promise<RefineResult>;
+  generateChecklist(todo: TodoWithSubtasks, hint?: string): Promise<ChecklistSuggestion>;
 }
 
 export class MockAIService implements AIService {
@@ -85,40 +91,71 @@ export class MockAIService implements AIService {
     return { priority: "low", reasoning: "No urgency indicators found." };
   }
 
-  async suggest(request: SuggestRequest): Promise<SuggestionResult[]> {
+  async suggest(request: SuggestRequest): Promise<SuggestionsPayload> {
     const pending = request.currentTodos?.filter((t) => t.status === "pending") ?? [];
     const suggestions: SuggestionResult[] = [];
 
     if (pending.length === 0) {
       suggestions.push({
-        title: "Start a daily planning session",
-        description: "Create a task list for today.",
+        kind: "new_task",
+        title: "Write down the three things that matter this week",
+        description: "List them on the page so the week has a shape before it fills itself.",
+        reason: "The list is empty, so there is nothing to reason about yet.",
         priority: "medium",
         category: "personal",
-        reason: "No pending tasks — great time to plan ahead.",
+        estimatedMinutes: 10,
+        checklist: [],
+        relatedTodoId: null,
+        confidence: 0.6,
       });
-    }
-
-    const urgentMissing = pending.every((t) => t.priority !== "urgent");
-    if (urgentMissing && pending.length > 3) {
+    } else {
+      const first = pending[0];
       suggestions.push({
-        title: "Review and reprioritize tasks",
-        description: "Ensure your most important tasks are flagged correctly.",
-        priority: "high",
+        kind: "next_action",
+        title: first ? `Start: ${first.title}` : "Pick one task and start it",
+        description: "Give it one uninterrupted sitting.",
+        reason: first
+          ? `"${first.title}" is the oldest thing still open.`
+          : "Something open needs to move.",
+        priority: "medium",
         category: "work",
-        reason: "Many pending tasks without urgent priority.",
+        estimatedMinutes: 45,
+        checklist: [],
+        relatedTodoId: null,
+        confidence: 0.5,
       });
     }
 
-    suggestions.push({
-      title: "Take a 5-minute break",
-      description: "Step away and recharge.",
-      priority: "low",
-      category: "health",
-      reason: "Regular breaks improve productivity.",
-    });
+    return {
+      briefing:
+        pending.length === 0
+          ? "Nothing open — the page is blank."
+          : `${pending.length} task${pending.length === 1 ? "" : "s"} waiting. (Offline mode: set ANTHROPIC_API_KEY for real analysis.)`,
+      focusTodoId: null,
+      focusReason: null,
+      suggestions,
+    };
+  }
 
-    return suggestions;
+  async refine(todo: TodoWithSubtasks): Promise<RefineResult> {
+    return {
+      improvedTitle: todo.title,
+      titleChanged: false,
+      suggestedDescription: todo.description ?? "",
+      suggestedPriority: todo.priority,
+      suggestedCategory: todo.category ?? "other",
+      estimatedMinutes: 60,
+      checklist: [],
+      clarifyingQuestion: null,
+      rationale: "Offline mode — set ANTHROPIC_API_KEY to get real refinements.",
+    };
+  }
+
+  async generateChecklist(todo: TodoWithSubtasks): Promise<ChecklistSuggestion> {
+    return {
+      items: [],
+      note: `Offline mode — cannot break down "${todo.title}" without an API key.`,
+    };
   }
 
   async estimate(request: EstimateRequest): Promise<EstimateResult> {

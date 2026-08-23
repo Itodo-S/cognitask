@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { success } from "../../utils/helpers.js";
 
 export async function journalRoutes(app: FastifyInstance) {
@@ -66,7 +66,6 @@ export async function journalRoutes(app: FastifyInstance) {
 
   
   app.delete<{ Params: { id: string } }>("/api/journal/:id", async (request, reply) => {
-    const { eq } = await import("drizzle-orm");
     const key = `journal:${request.params.id}`;
     const prefs = await db
       .select()

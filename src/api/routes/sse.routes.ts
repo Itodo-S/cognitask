@@ -1,5 +1,4 @@
 import type { FastifyInstance } from "fastify";
-import type { WebSocket } from "ws";
 import { todoService } from "../../services/todo.service.js";
 import { aiService } from "../../services/ai.service.js";
 import { success } from "../../utils/helpers.js";

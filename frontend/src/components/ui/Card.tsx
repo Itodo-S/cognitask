@@ -1,6 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
+import { Sheet } from "./Paper";
 
 interface CardProps {
   children: React.ReactNode;
@@ -9,38 +10,33 @@ interface CardProps {
   onClick?: () => void;
 }
 
+/** Thin wrapper kept so existing callers keep working; renders a paper sheet. */
 export function Card({ children, className, hover, onClick }: CardProps) {
   return (
-    <div
+    <Sheet
       onClick={onClick}
-      className={clsx(
-        "bg-paper-50 border border-ink-200/60 rounded-lg shadow-paper",
-        "transition-all duration-200",
-        hover && "hover:shadow-paper-md hover:border-ink-300/60 cursor-pointer",
-        onClick && "cursor-pointer",
-        className
-      )}
+      className={clsx(hover && "transition-shadow duration-200 hover:shadow-sheet-md", className)}
     >
       {children}
-    </div>
+    </Sheet>
   );
 }
 
 export function CardHeader({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={clsx("px-4 py-3 border-b border-ink-200/40", className)}>
+    <div className={clsx("border-b border-dashed border-pencil-200 px-5 py-3", className)}>
       {children}
     </div>
   );
 }
 
 export function CardContent({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={clsx("px-4 py-3", className)}>{children}</div>;
+  return <div className={clsx("px-5 py-4", className)}>{children}</div>;
 }
 
 export function CardFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={clsx("px-4 py-3 border-t border-ink-200/40", className)}>
+    <div className={clsx("border-t border-dashed border-pencil-200 px-5 py-3", className)}>
       {children}
     </div>
   );

@@ -1,134 +1,183 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { clsx } from "clsx";
 import { Header } from "@/components/layout/Header";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { FieldLabel, StickyNote } from "@/components/ui/Paper";
+import { InkCheck } from "@/components/ui/InkCheck";
 import { useToast } from "@/components/ui/Toast";
+import { aiApi, todosApi } from "@/lib/api";
+import type { AiStatus, TodoStats } from "@/types";
 
-interface Settings {
-  theme: "paper" | "dark";
-  aiEnabled: boolean;
-  aiProvider: "claude" | "openai";
-  backendUrl: string;
+interface Preferences {
+  autoBreakDown: boolean;
+  confirmBeforeTearOut: boolean;
+  showCrossedOff: boolean;
 }
 
-const defaults: Settings = {
-  theme: "paper",
-  aiEnabled: true,
-  aiProvider: "claude",
-  backendUrl: "http://localhost:3001",
+const defaults: Preferences = {
+  autoBreakDown: false,
+  confirmBeforeTearOut: true,
+  showCrossedOff: true,
 };
 
+const STORAGE_KEY = "cognitask-preferences";
+
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Settings>(defaults);
-  const [saving, setSaving] = useState(false);
+  const [prefs, setPrefs] = useState<Preferences>(defaults);
+  const [status, setStatus] = useState<AiStatus | null>(null);
+  const [stats, setStats] = useState<TodoStats | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const saved = localStorage.getItem("cognitask-settings");
-    if (saved) setSettings(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) setPrefs({ ...defaults, ...JSON.parse(saved) });
+    } catch {
+      /* a corrupt or blocked store just means defaults */
+    }
+    aiApi.status().then(setStatus).catch(() => setStatus(null));
+    todosApi.stats().then(setStats).catch(() => setStats(null));
   }, []);
 
-  const save = async () => {
-    setSaving(true);
+  const toggle = (key: keyof Preferences) => {
+    const next = { ...prefs, [key]: !prefs[key] };
+    setPrefs(next);
     try {
-      localStorage.setItem("cognitask-settings", JSON.stringify(settings));
-      toast("Settings saved");
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      toast("Noted");
     } catch {
-      toast("Failed to save", "error");
-    } finally {
-      setSaving(false);
+      toast("Couldn't remember that on this device", "error");
     }
   };
 
+  const rows: { key: keyof Preferences; label: string; hint: string }[] = [
+    {
+      key: "autoBreakDown",
+      label: "Offer steps for every new task",
+      hint: "Ask the assistant for a checklist as soon as something is written down.",
+    },
+    {
+      key: "confirmBeforeTearOut",
+      label: "Ask before tearing a task out",
+      hint: "A confirmation before anything leaves the page.",
+    },
+    {
+      key: "showCrossedOff",
+      label: "Keep crossed-off tasks visible",
+      hint: "Finished lines stay on the page in faded ink.",
+    },
+  ];
+
   return (
     <div>
-      <Header title="Settings" subtitle="Configure your CogniTask experience" />
+      <Header title="Settings" subtitle="How this notebook behaves" />
 
-      <div className="max-w-2xl space-y-6">
-        {}
-        <Card>
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Appearance</h2>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-sans text-sm font-medium text-ink-700">Theme</label>
-              <div className="flex gap-3">
-                {(["paper", "dark"] as const).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setSettings((s) => ({ ...s, theme: t }))}
-                    className={`flex-1 p-4 rounded-lg border-2 transition-all ${
-                      settings.theme === t
-                        ? "border-ink-900 bg-ink-50"
-                        : "border-ink-200 bg-paper-50 hover:border-ink-300"
-                    }`}
-                  >
-                    <div className={`w-full h-8 rounded mb-2 ${t === "paper" ? "bg-paper-50 border border-ink-200" : "bg-ink-900"}`} />
-                    <span className="font-sans text-sm text-ink-700 capitalize">{t}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="max-w-2xl space-y-9">
+        <section>
+          <h2 className="mb-3 font-hand text-[26px] leading-none text-ink-900">
+            <span className="pen-underline">Preferences</span>
+          </h2>
 
-        {}
-        <Card>
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">AI Assistant</h2>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+          <ul className="space-y-3">
+            {rows.map((row) => (
+              <li key={row.key} className="flex items-start gap-3 border-b border-dashed border-rule-soft pb-3">
+                <InkCheck
+                  state={prefs[row.key] ? "checked" : "empty"}
+                  onClick={() => toggle(row.key)}
+                  label={row.label}
+                  className="mt-0.5"
+                />
                 <div>
-                  <p className="font-sans text-sm font-medium text-ink-700">Enable AI</p>
-                  <p className="font-sans text-xs text-ink-400">Turn the AI assistant on or off</p>
+                  <p
+                    className={clsx(
+                      "font-hand text-[20px] leading-tight",
+                      prefs[row.key] ? "text-ink-900" : "text-pencil-400"
+                    )}
+                  >
+                    {row.label}
+                  </p>
+                  <p className="mt-0.5 font-note text-[14px] leading-snug text-pencil-400">
+                    {row.hint}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setSettings((s) => ({ ...s, aiEnabled: !s.aiEnabled }))}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${
-                    settings.aiEnabled ? "bg-ink-900" : "bg-ink-200"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-5 h-5 bg-paper-50 rounded-full transition-transform shadow ${
-                      settings.aiEnabled ? "translate-x-[22px]" : "translate-x-0.5"
-                    }`}
-                  />
-                </button>
-              </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-              <Input
-                label="Backend URL"
-                value={settings.backendUrl}
-                onChange={(e) => setSettings((s) => ({ ...s, backendUrl: e.target.value }))}
-                placeholder="http://localhost:3001"
-                hint="URL of the CogniTask backend server"
-              />
+        <section>
+          <h2 className="mb-3 font-hand text-[26px] leading-none text-ink-900">
+            <span className="pen-underline">The assistant</span>
+          </h2>
+
+          {status === null ? (
+            <p className="font-note text-[15px] text-pencil-300">Checking…</p>
+          ) : status.configured ? (
+            <div className="space-y-1">
+              <p className="font-note text-[16px] text-ink-700">
+                Connected, reading your list with{" "}
+                <span className="highlight font-type text-[13px]">{status.model}</span>.
+              </p>
+              <p className="font-note text-[14px] text-pencil-400">
+                It sees your open tasks, what&apos;s overdue and what&apos;s gone stale — that&apos;s
+                how it can point at specific things rather than giving generic advice.
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          ) : (
+            <StickyNote tone="orange" tilt="a" className="max-w-md">
+              <p className="font-hand text-[20px] leading-snug text-ink-900">
+                Running offline.
+              </p>
+              <p className="mt-1 font-note text-[14px] leading-snug text-ink-700/80">
+                Set <span className="font-type text-[12px]">ANTHROPIC_API_KEY</span> (or{" "}
+                <span className="font-type text-[12px]">ANTHROPIC_AUTH_TOKEN</span>) in the backend
+                and restart to get real planning and suggestions.
+              </p>
+            </StickyNote>
+          )}
+        </section>
 
-        {}
-        <Card>
-          <CardContent>
-            <h2 className="font-serif text-lg font-semibold text-ink-900 mb-4">Danger Zone</h2>
-            <p className="font-sans text-sm text-ink-500 mb-4">
-              These actions cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={() => { localStorage.clear(); toast("Local data cleared"); }}>
-                Clear Local Data
-              </Button>
+        {stats && (
+          <section>
+            <h2 className="mb-3 font-hand text-[26px] leading-none text-ink-900">
+              <span className="pen-underline">This notebook</span>
+            </h2>
+            <div className="flex flex-wrap gap-x-8 gap-y-3">
+              {[
+                { label: "entries", value: stats.total },
+                { label: "open", value: stats.pending + stats.inProgress },
+                { label: "crossed off", value: stats.completed },
+                { label: "torn out", value: stats.archived },
+              ].map((s) => (
+                <div key={s.label}>
+                  <p className="font-hand text-[32px] leading-none text-ink-900">{s.value}</p>
+                  <p className="mt-1 font-type text-[9px] uppercase tracking-[0.16em] text-pencil-400">
+                    {s.label}
+                  </p>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </section>
+        )}
 
-        {}
+        <div className="cut-line" />
+
         <div className="flex justify-end">
-          <Button onClick={save} disabled={saving}>
-            {saving ? "Saving..." : "Save Settings"}
+          <Button
+            variant="danger"
+            onClick={() => {
+              try {
+                localStorage.removeItem(STORAGE_KEY);
+              } catch {
+                /* nothing to clear */
+              }
+              setPrefs(defaults);
+              toast("Back to defaults");
+            }}
+          >
+            Reset preferences
           </Button>
         </div>
       </div>

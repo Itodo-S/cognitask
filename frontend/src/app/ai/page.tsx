@@ -1,65 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { Header } from "@/components/layout/Header";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { useEffect, useState } from "react";
 import { clsx } from "clsx";
+import { Header } from "@/components/layout/Header";
 import { AiChat } from "@/components/ai/AiChat";
 import { AiSuggestions } from "@/components/ai/AiSuggestions";
 import { AiDecompose } from "@/components/ai/AiDecompose";
+import { aiApi } from "@/lib/api";
+import type { AiStatus } from "@/types";
 
-type Tab = "chat" | "suggest" | "decompose";
+type Tab = "suggest" | "decompose" | "chat";
 
-const tabs: { id: Tab; label: string; description: string }[] = [
-  { id: "chat", label: "Chat", description: "Ask your AI assistant" },
-  { id: "suggest", label: "Suggestions", description: "AI-powered task ideas" },
-  { id: "decompose", label: "Decompose", description: "Break down goals" },
+const tabs: { id: Tab; label: string }[] = [
+  { id: "suggest", label: "What now?" },
+  { id: "decompose", label: "Plan a goal" },
+  { id: "chat", label: "Just ask" },
 ];
 
 export default function AIPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("chat");
+  const [tab, setTab] = useState<Tab>("suggest");
+  const [status, setStatus] = useState<AiStatus | null>(null);
+
+  useEffect(() => {
+    aiApi.status().then(setStatus).catch(() => setStatus(null));
+  }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)]">
-      <Header title="AI Assistant" subtitle="Chat with your task assistant" />
+    <div className="flex min-h-[32rem] flex-col">
+      <Header
+        title="Ask"
+        subtitle={
+          status?.configured
+            ? `reading your list with ${status.model}`
+            : status
+            ? "offline mode — set ANTHROPIC_API_KEY for real answers"
+            : undefined
+        }
+      />
 
-      {}
-      <div className="flex gap-1 mb-4 bg-ink-100/50 rounded-lg p-1">
-        {tabs.map((tab) => (
-          <Button
-            key={tab.id}
-            variant="ghost"
-            size="sm"
-            onClick={() => setActiveTab(tab.id)}
+      {/* Divider tabs, like the coloured tabs in a ring binder. */}
+      <div className="mb-6 flex gap-1 border-b border-dashed border-pencil-200">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
             className={clsx(
-              "flex-1 font-sans text-sm transition-all",
-              activeTab === tab.id
-                ? "bg-paper-50 text-ink-900 shadow-sm border border-ink-200/60"
-                : "text-ink-500 hover:text-ink-700"
+              "-mb-px px-3 py-1.5 font-hand text-[20px] leading-none transition-all",
+              tab === t.id
+                ? "border-b-[3px] border-ink-800 text-ink-900"
+                : "border-b-[3px] border-transparent text-pencil-400 hover:text-ink-700"
             )}
           >
-            {tab.label}
-          </Button>
+            {t.label}
+          </button>
         ))}
       </div>
 
-      {}
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === "chat" && <AiChat />}
-          {activeTab === "suggest" && (
-            <div className="p-4">
-              <AiSuggestions />
-            </div>
-          )}
-          {activeTab === "decompose" && (
-            <div className="p-4">
-              <AiDecompose />
-            </div>
-          )}
-        </div>
-      </Card>
+      <div className="flex-1">
+        {tab === "suggest" && <AiSuggestions />}
+        {tab === "decompose" && <AiDecompose />}
+        {tab === "chat" && <AiChat />}
+      </div>
     </div>
   );
 }

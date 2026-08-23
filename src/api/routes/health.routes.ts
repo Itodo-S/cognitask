@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { env } from "../../config/env.js";
-import { db } from "../../db/client.js";
+import { db, schema } from "../../db/client.js";
 import { success } from "../../utils/helpers.js";
 
 export async function healthRoutes(app: FastifyInstance) {
@@ -25,7 +25,7 @@ export async function healthRoutes(app: FastifyInstance) {
 
     try {
       const start = Date.now();
-      await db.select().from((await import("../../db/schema.js")).schema.todos).limit(1);
+      await db.select().from(schema.todos).limit(1);
       dbLatency = Date.now() - start;
     } catch (err) {
       dbStatus = "error";

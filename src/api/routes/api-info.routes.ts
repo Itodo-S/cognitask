@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { success } from "../../utils/helpers.js";
 import { env } from "../../config/env.js";
-import { logger } from "../../utils/logger.js";
 
 export async function apiInfoRoutes(app: FastifyInstance) {
   

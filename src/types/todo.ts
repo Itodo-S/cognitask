@@ -1,4 +1,5 @@
 import type { TodoStatus, TodoPriority, TodoCategory } from "../config/constants.js";
+import type { ChecklistItem, ChecklistProgress } from "./checklist.js";
 export type { TodoStatus, TodoPriority, TodoCategory };
 
 export interface Todo {
@@ -19,6 +20,8 @@ export interface Todo {
 export interface TodoWithSubtasks extends Todo {
   subtasks?: TodoWithSubtasks[];
   tags?: Tag[];
+  checklist?: ChecklistItem[];
+  checklistProgress?: ChecklistProgress;
 }
 
 export interface Tag {
@@ -35,6 +38,8 @@ export interface CreateTodoInput {
   dueDate?: string;
   parentId?: string;
   tags?: string[];
+  checklist?: string[];
+  aiMetadata?: string;
 }
 
 export interface UpdateTodoInput {
@@ -42,8 +47,9 @@ export interface UpdateTodoInput {
   description?: string;
   status?: TodoStatus;
   priority?: TodoPriority;
-  category?: TodoCategory;
-  dueDate?: string;
+  category?: TodoCategory | null;
+  dueDate?: string | null;
+  parentId?: string | null;
 }
 
 export interface TodoFilter {

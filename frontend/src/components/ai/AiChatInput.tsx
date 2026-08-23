@@ -1,3 +1,5 @@
+"use client";
+
 import { RefObject } from "react";
 import { Button } from "@/components/ui/Button";
 
@@ -11,24 +13,26 @@ interface AiChatInputProps {
 
 export function AiChatInput({ input, setInput, onSend, loading, inputRef }: AiChatInputProps) {
   return (
-    <div className="border-t border-ink-200/40 px-4 py-3">
-      <div className="flex gap-2">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && onSend()}
-          placeholder="Ask about your tasks..."
-          className="paper-input flex-1"
-          disabled={loading}
-        />
-        <Button onClick={onSend} disabled={!input.trim() || loading}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 1L6 8M13 1l-4 12-2-5-5-2z" />
-          </svg>
-        </Button>
-      </div>
+    <div className="flex items-end gap-2 border-t border-dashed border-pencil-200 px-1 pt-3">
+      <input
+        ref={inputRef}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            onSend();
+          }
+        }}
+        placeholder="ask about your list…"
+        disabled={loading}
+        className="write-line flex-1 font-hand text-[20px]"
+      />
+      <Button onClick={onSend} disabled={!input.trim() || loading} size="sm" aria-label="Send">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M14.4 1.6 C10.6 5.2 7.4 8.2 5.8 9.9 M14.4 1.6 C13.2 6.2 12 10.6 10.8 14.6 C9.8 12.7 8.9 11.2 8 9.9 C6.2 9.1 4.4 8.3 2.4 7.6 C6.2 5.5 10.3 3.4 14.4 1.6 Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        </svg>
+      </Button>
     </div>
   );
 }

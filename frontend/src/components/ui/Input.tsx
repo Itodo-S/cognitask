@@ -1,39 +1,38 @@
 "use client";
 
 import { clsx } from "clsx";
-import { forwardRef } from "react";
+import { forwardRef, useId } from "react";
+import { FieldLabel } from "./Paper";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   hint?: string;
+  /** Underline only, like writing straight onto a ruled line. */
+  bare?: boolean;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, hint, id, ...props }, ref) => {
-    const inputId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+  ({ className, label, error, hint, bare, id, ...props }, ref) => {
+    const generated = useId();
+    const inputId = id ?? generated;
+
     return (
       <div className="flex flex-col gap-1.5">
-        {label && (
-          <label htmlFor={inputId} className="font-sans text-sm font-medium text-ink-700">
-            {label}
-          </label>
-        )}
+        {label && <FieldLabel htmlFor={inputId}>{label}</FieldLabel>}
         <input
           ref={ref}
           id={inputId}
           className={clsx(
-            "w-full px-3 py-2 bg-paper-50 border rounded-md",
-            "font-sans text-sm text-ink-900 placeholder:text-ink-400",
-            "focus:outline-none focus:ring-1 focus:ring-ink-900/20 focus:border-ink-900/40",
-            "transition-all duration-200",
-            error ? "border-red-400 focus:ring-red-400/20" : "border-ink-200",
+            bare ? "write-line" : "write-box",
+            "text-[17px] leading-snug",
+            error && "border-redpen-400",
             className
           )}
           {...props}
         />
-        {hint && !error && <p className="font-sans text-xs text-ink-400">{hint}</p>}
-        {error && <p className="font-sans text-xs text-red-600">{error}</p>}
+        {hint && !error && <p className="font-type text-[10px] text-pencil-300">{hint}</p>}
+        {error && <p className="font-hand text-base text-redpen-500">{error}</p>}
       </div>
     );
   }
@@ -47,28 +46,23 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, label, error, id, ...props }, ref) => {
-    const textareaId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
+    const generated = useId();
+    const areaId = id ?? generated;
+
     return (
       <div className="flex flex-col gap-1.5">
-        {label && (
-          <label htmlFor={textareaId} className="font-sans text-sm font-medium text-ink-700">
-            {label}
-          </label>
-        )}
+        {label && <FieldLabel htmlFor={areaId}>{label}</FieldLabel>}
         <textarea
           ref={ref}
-          id={textareaId}
+          id={areaId}
           className={clsx(
-            "w-full px-3 py-2 bg-paper-50 border rounded-md resize-none",
-            "font-sans text-sm text-ink-900 placeholder:text-ink-400",
-            "focus:outline-none focus:ring-1 focus:ring-ink-900/20 focus:border-ink-900/40",
-            "transition-all duration-200",
-            error ? "border-red-400" : "border-ink-200",
+            "write-box resize-none text-[17px] leading-relaxed",
+            error && "border-redpen-400",
             className
           )}
           {...props}
         />
-        {error && <p className="font-sans text-xs text-red-600">{error}</p>}
+        {error && <p className="font-hand text-base text-redpen-500">{error}</p>}
       </div>
     );
   }

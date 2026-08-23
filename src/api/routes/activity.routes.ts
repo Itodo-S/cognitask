@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { success, error } from "../../utils/helpers.js";
 import { z } from "zod";
 

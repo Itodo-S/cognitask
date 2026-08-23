@@ -36,7 +36,7 @@ export async function automationRoutes(app: FastifyInstance) {
           })
           .optional(),
         action: z.enum(["categorize", "prioritize", "notify", "add_tag", "set_due"]),
-        actionConfig: z.record(z.unknown()).optional(),
+        actionConfig: z.record(z.string(), z.unknown()).optional(),
       })
       .parse(request.body);
 

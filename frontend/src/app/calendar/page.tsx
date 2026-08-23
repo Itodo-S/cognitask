@@ -1,174 +1,229 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Header } from "@/components/layout/Header";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { clsx } from "clsx";
+import { Header } from "@/components/layout/Header";
+import { InkCheck } from "@/components/ui/InkCheck";
+import { todosApi } from "@/lib/api";
+import { useTodoStore } from "@/stores/todoStore";
 import type { Todo } from "@/types";
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
 
+const localKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** A wall planner: a month grid, pencilled in. */
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [cursor, setCursor] = useState(() => new Date());
+  const [selected, setSelected] = useState<Date | null>(() => new Date());
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/todos`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => setTodos(d.data ?? d.todos ?? d))
-      .catch(() => {});
-  }, []);
+  const { updateStatus } = useTodoStore();
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = new Date();
-
-  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
-
-  const isToday = (day: number) =>
-    today.getFullYear() === year && today.getMonth() === month && today.getDate() === day;
-
-  const isSelected = (day: number) =>
-    selectedDate?.getFullYear() === year && selectedDate?.getMonth() === month && selectedDate?.getDate() === day;
-
-  const getTodosForDay = (day: number) => {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return todos.filter((t) => t.dueDate?.startsWith(dateStr));
+  const load = () => {
+    todosApi
+      .list({ limit: 100 })
+      .then(setTodos)
+      .catch(() => setTodos([]))
+      .finally(() => setLoading(false));
   };
 
-  const selectedTodos = selectedDate ? getTodosForDay(selectedDate.getDate()) : [];
+  useEffect(load, []);
+
+  const year = cursor.getFullYear();
+  const month = cursor.getMonth();
+  const today = new Date();
+
+  // Weeks start on Monday.
+  const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const byDay = useMemo(() => {
+    const map = new Map<string, Todo[]>();
+    for (const t of todos) {
+      if (!t.dueDate) continue;
+      const key = localKey(new Date(t.dueDate));
+      map.set(key, [...(map.get(key) ?? []), t]);
+    }
+    return map;
+  }, [todos]);
+
+  const selectedTodos = selected ? byDay.get(localKey(selected)) ?? [] : [];
+
+  const cross = async (id: string) => {
+    await updateStatus(id, "completed");
+    load();
+  };
 
   return (
     <div>
-      <Header title="Calendar" subtitle="View tasks by due date" />
+      <Header
+        title="Calendar"
+        subtitle={loading ? "checking dates…" : "everything with a date on it"}
+      />
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {}
-        <div className="lg:col-span-2">
-          <Card>
-            <CardContent>
-              {}
-              <div className="flex items-center justify-between mb-4">
-                <Button variant="ghost" size="sm" onClick={prevMonth}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M9 3L5 7l4 4"/></svg>
-                </Button>
-                <h2 className="font-serif text-lg font-semibold text-ink-900">
-                  {MONTHS[month]} {year}
-                </h2>
-                <Button variant="ghost" size="sm" onClick={nextMonth}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M5 3l4 4-4 4"/></svg>
-                </Button>
-              </div>
+      <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="font-hand text-[28px] leading-none text-ink-900">
+              {MONTHS[month]} <span className="text-pencil-300">{year}</span>
+            </h2>
+            <div className="flex gap-1">
+              <button
+                onClick={() => setCursor(new Date(year, month - 1, 1))}
+                aria-label="Previous month"
+                className="grid h-8 w-8 place-items-center rounded-full font-hand text-[20px] text-pencil-400 transition-colors hover:bg-ink-100 hover:text-ink-800"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => {
+                  setCursor(new Date());
+                  setSelected(new Date());
+                }}
+                className="px-2 font-type text-[9px] uppercase tracking-widest text-pencil-400 transition-colors hover:text-ink-800"
+              >
+                today
+              </button>
+              <button
+                onClick={() => setCursor(new Date(year, month + 1, 1))}
+                aria-label="Next month"
+                className="grid h-8 w-8 place-items-center rounded-full font-hand text-[20px] text-pencil-400 transition-colors hover:bg-ink-100 hover:text-ink-800"
+              >
+                ›
+              </button>
+            </div>
+          </div>
 
-              {}
-              <div className="grid grid-cols-7 mb-2">
-                {DAYS.map((d) => (
-                  <div key={d} className="text-center font-sans text-[11px] font-medium text-ink-400 uppercase py-2">
-                    {d}
-                  </div>
-                ))}
-              </div>
+          <div className="grid grid-cols-7 gap-px border-b border-dashed border-pencil-200 pb-1">
+            {DAYS.map((d, i) => (
+              <span
+                key={i}
+                className="text-center font-type text-[9px] uppercase tracking-widest text-pencil-300"
+              >
+                {d}
+              </span>
+            ))}
+          </div>
 
-              {}
-              <div className="grid grid-cols-7 gap-px bg-ink-200/30 rounded-lg overflow-hidden">
-                {Array.from({ length: firstDay }).map((_, i) => (
-                  <div key={`empty-${i}`} className="bg-paper-50 min-h-[72px] sm:min-h-[88px]" />
-                ))}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1;
-                  const dayTodos = getTodosForDay(day);
-                  return (
-                    <button
-                      key={day}
-                      onClick={() => setSelectedDate(new Date(year, month, day))}
+          <div className="mt-1 grid grid-cols-7 gap-px">
+            {Array.from({ length: leadingBlanks }).map((_, i) => (
+              <span key={`blank-${i}`} />
+            ))}
+
+            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+              const date = new Date(year, month, day);
+              const key = localKey(date);
+              const dayTodos = byDay.get(key) ?? [];
+              const openCount = dayTodos.filter((t) => t.status !== "completed").length;
+              const isToday =
+                today.getFullYear() === year &&
+                today.getMonth() === month &&
+                today.getDate() === day;
+              const isSelected = selected ? localKey(selected) === key : false;
+              const isPast = date < new Date(today.toDateString());
+
+              return (
+                <button
+                  key={day}
+                  onClick={() => setSelected(date)}
+                  className={clsx(
+                    "relative flex aspect-square flex-col items-center justify-center rounded-[3px] transition-colors",
+                    isSelected
+                      ? "bg-marker-yellow/70"
+                      : "hover:bg-marker-yellow/25"
+                  )}
+                >
+                  {/* Today gets circled in red pen. */}
+                  {isToday && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-1.5 rounded-full border-[1.5px] border-redpen-400"
+                      style={{ borderRadius: "48% 52% 51% 49% / 53% 47% 53% 47%" }}
+                    />
+                  )}
+                  <span
+                    className={clsx(
+                      "font-hand text-[19px] leading-none",
+                      isToday
+                        ? "text-redpen-600"
+                        : isPast
+                        ? "text-pencil-300"
+                        : "text-ink-800"
+                    )}
+                  >
+                    {day}
+                  </span>
+
+                  {openCount > 0 && (
+                    <span className="mt-0.5 flex gap-[2px]">
+                      {Array.from({ length: Math.min(openCount, 3) }).map((_, i) => (
+                        <span key={i} className="h-1 w-1 rounded-full bg-ink-500" />
+                      ))}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* The day's page, torn off the planner. */}
+        <section>
+          <h2 className="mb-3 font-hand text-[24px] leading-none text-ink-900">
+            <span className="pen-underline">
+              {selected
+                ? selected.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })
+                : "Pick a day"}
+            </span>
+          </h2>
+
+          {selectedTodos.length === 0 ? (
+            <p className="font-note text-[15px] text-pencil-300">Nothing due this day.</p>
+          ) : (
+            <ul className="space-y-2">
+              {selectedTodos.map((todo, i) => (
+                <motion.li
+                  key={todo.id}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="flex items-start gap-2.5 border-b border-dashed border-rule-soft pb-2"
+                >
+                  <InkCheck
+                    state={todo.status === "completed" ? "checked" : "empty"}
+                    tone={todo.priority === "urgent" ? "red" : "ink"}
+                    onClick={todo.status === "completed" ? undefined : () => cross(todo.id)}
+                    label={`Complete ${todo.title}`}
+                    className="mt-0.5"
+                  />
+                  <div className="min-w-0">
+                    <p
                       className={clsx(
-                        "bg-paper-50 min-h-[72px] sm:min-h-[88px] p-1.5 text-left transition-colors",
-                        "hover:bg-ink-50",
-                        isSelected(day) && "ring-2 ring-ink-900 ring-inset",
-                        isToday(day) && !isSelected(day) && "bg-paper-100"
+                        "font-hand text-[19px] leading-tight",
+                        todo.status === "completed" ? "text-pencil-300 line-through" : "text-ink-900"
                       )}
                     >
-                      <span
-                        className={clsx(
-                          "font-sans text-xs block mb-1",
-                          isToday(day) ? "font-bold text-ink-900" : "text-ink-500"
-                        )}
-                      >
-                        {day}
+                      {todo.title}
+                    </p>
+                    {todo.checklistProgress && todo.checklistProgress.total > 0 && (
+                      <span className="font-type text-[9px] tracking-widest text-pencil-300">
+                        {todo.checklistProgress.done}/{todo.checklistProgress.total} steps
                       </span>
-                      <div className="space-y-0.5">
-                        {dayTodos.slice(0, 2).map((t) => (
-                          <div
-                            key={t.id}
-                            className={clsx(
-                              "text-[10px] font-sans px-1 py-0.5 rounded truncate",
-                              t.status === "completed"
-                                ? "bg-ink-100 text-ink-400 line-through"
-                                : "bg-ink-900 text-paper-50"
-                            )}
-                          >
-                            {t.title}
-                          </div>
-                        ))}
-                        {dayTodos.length > 2 && (
-                          <span className="text-[10px] font-sans text-ink-400">+{dayTodos.length - 2}</span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {}
-        <div>
-          <Card>
-            <CardContent>
-              <h3 className="font-serif text-lg font-semibold text-ink-900 mb-4">
-                {selectedDate
-                  ? selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
-                  : "Select a date"}
-              </h3>
-
-              {!selectedDate ? (
-                <p className="font-sans text-sm text-ink-400 text-center py-8">
-                  Click a date to see tasks
-                </p>
-              ) : selectedTodos.length === 0 ? (
-                <p className="font-sans text-sm text-ink-400 text-center py-8">
-                  No tasks due on this date
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {selectedTodos.map((todo) => (
-                    <div key={todo.id} className="p-3 rounded-lg bg-paper-100/50 border border-ink-200/30">
-                      <p className={clsx(
-                        "font-serif text-sm",
-                        todo.status === "completed" ? "line-through text-ink-400" : "text-ink-800"
-                      )}>
-                        {todo.title}
-                      </p>
-                      {todo.category && (
-                        <span className="paper-badge bg-paper-50 text-ink-500 border-ink-200 mt-1 inline-block text-[10px]">
-                          {todo.category}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                    )}
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </div>
   );

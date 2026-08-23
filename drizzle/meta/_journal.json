@@ -8,6 +8,13 @@
       "when": 1787324527532,
       "tag": "0000_nostalgic_meltdown",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787469815064,
+      "tag": "0001_fast_cerise",
+      "breakpoints": true
     }
   ]
 }

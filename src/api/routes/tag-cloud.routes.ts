@@ -1,8 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { db, schema } from "../../db/client.js";
 import { sql, eq } from "drizzle-orm";
-import { success, error } from "../../utils/helpers.js";
-import { z } from "zod";
+import { success } from "../../utils/helpers.js";
 
 export async function tagCloudRoutes(app: FastifyInstance) {
   
