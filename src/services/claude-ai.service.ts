@@ -35,6 +35,7 @@ import {
   checklistSchema,
 } from "./ai/prompts.js";
 import { logger } from "../utils/logger.js";
+import { describeError } from "../utils/helpers.js";
 
 const VALID_PRIORITIES = new Set<string>(TODO_PRIORITIES);
 const VALID_CATEGORIES = new Set<string>(TODO_CATEGORIES);
@@ -161,7 +162,7 @@ export class ClaudeAIService implements AIService {
     try {
       workspace = renderSnapshot(await buildSnapshot(), 25);
     } catch (err) {
-      logger.warn("Snapshot failed for decompose", { error: String(err) });
+      logger.warn("Snapshot failed for decompose", { error: describeError(err) });
     }
 
     yield { type: "thinking", data: { message: "Working out the order things have to happen in…" } };
@@ -223,7 +224,7 @@ export class ClaudeAIService implements AIService {
       workspace = renderSnapshot(snapshot);
       knownIds = new Set(snapshot.todos.map((t) => t.id));
     } catch (err) {
-      logger.warn("Snapshot failed for suggest, using request payload", { error: String(err) });
+      logger.warn("Snapshot failed for suggest, using request payload", { error: describeError(err) });
       workspace = request.currentTodos?.length
         ? `Tasks:\n${request.currentTodos
             .map((t) => `- [${t.status}] [${t.priority}] ${t.title}`)

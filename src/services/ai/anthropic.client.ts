@@ -1,5 +1,6 @@
 import { env } from "../../config/env.js";
 import { logger } from "../../utils/logger.js";
+import { describeError } from "../../utils/helpers.js";
 
 export interface JsonSchema {
   type: "object";
@@ -78,9 +79,26 @@ async function callApi(body: Record<string, unknown>, timeoutMs: number): Promis
         signal: AbortSignal.timeout(timeoutMs),
       });
 
-      if (res.ok) return await res.json();
+      const contentType = res.headers.get("content-type") ?? "";
+      const raw = await res.text();
 
-      const detail = await res.text().catch(() => "");
+      if (res.ok) {
+        // A proxy or WAF in front of the endpoint answers with an HTML page;
+        // report that plainly instead of letting JSON.parse throw.
+        if (!contentType.includes("json")) {
+          throw new Error(
+            `Anthropic endpoint ${new URL(apiUrl()).host} returned ${contentType || "unknown content-type"} ` +
+              `instead of JSON (HTTP ${res.status}). Body starts: ${raw.slice(0, 200).replace(/\s+/g, " ")}`
+          );
+        }
+        try {
+          return JSON.parse(raw);
+        } catch {
+          throw new Error(`Anthropic endpoint returned malformed JSON: ${raw.slice(0, 200)}`);
+        }
+      }
+
+      const detail = raw;
       // 4xx other than rate limiting will not get better by trying again.
       if (res.status < 500 && res.status !== 429) {
         throw new Error(`Anthropic API ${res.status}: ${detail.slice(0, 400)}`);
@@ -93,7 +111,7 @@ async function callApi(body: Record<string, unknown>, timeoutMs: number): Promis
 
     if (attempt < MAX_ATTEMPTS) {
       const backoff = 500 * 2 ** (attempt - 1);
-      logger.warn("Anthropic call failed, retrying", { attempt, backoff, error: String(lastError) });
+      logger.warn("Anthropic call failed, retrying", { attempt, backoff, error: describeError(lastError) });
       await sleep(backoff);
     }
   }
@@ -210,7 +228,7 @@ export async function structured<T>(prompt: string, options: StructuredOptions<T
   } catch (err) {
     logger.error("Structured call failed, retrying without tools", {
       toolName,
-      error: String(err),
+      error: describeError(err),
     });
   }
 
@@ -225,7 +243,7 @@ export async function structured<T>(prompt: string, options: StructuredOptions<T
     const parsed = extractJson(text);
     if (parsed && typeof parsed === "object") return parsed as T;
   } catch (err) {
-    logger.error("JSON fallback failed", { toolName, error: String(err) });
+    logger.error("JSON fallback failed", { toolName, error: describeError(err) });
   }
 
   return fallback;

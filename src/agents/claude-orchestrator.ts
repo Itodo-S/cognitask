@@ -16,6 +16,7 @@ import { CHAT_SYSTEM } from "../services/ai/prompts.js";
 import { buildSnapshot, renderSnapshot } from "../services/ai/context.builder.js";
 import { wsGateway } from "../ws/gateway.js";
 import { logger } from "../utils/logger.js";
+import { describeError } from "../utils/helpers.js";
 
 const DAY = 86_400_000;
 
@@ -139,9 +140,13 @@ export class ClaudeOrchestrator {
       );
       if (!response.trim()) response = "I didn't get a reply from the model — try asking again.";
     } catch (err) {
-      logger.error("Claude chat error", { error: String(err) });
-      const msg = err instanceof Error ? err.message : String(err);
-      response = `I couldn't reach the model just now (${msg}). Please check the API key and settings.`;
+      const detail = describeError(err);
+      logger.error("Claude chat error", { error: detail });
+      // Name the layer that actually broke — the database and the model fail
+      // very differently, and "check your API key" is wrong advice for the former.
+      response = /Failed query|postgres|ECONNREFUSED|ETIMEDOUT|SASL|password/i.test(detail)
+        ? `I can't read your task list right now — the database isn't reachable. (${detail.slice(0, 220)})`
+        : `I couldn't reach the model just now. (${detail.slice(0, 220)})`;
     }
 
     const resolvedSessionId = sessionId ?? crypto.randomUUID();
