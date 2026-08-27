@@ -17,8 +17,10 @@ interface Provider {
   model: string;
 }
 
+// Groq production-tier ids only — preview models are discontinued at short
+// notice. Verify against console.groq.com/docs/models before changing.
 const DEFAULTS = {
-  groq: { baseUrl: "https://api.groq.com/openai/v1", model: "moonshotai/kimi-k2-instruct" },
+  groq: { baseUrl: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b" },
   gemini: { baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai", model: "gemini-2.5-flash" },
 } as const;
 
@@ -105,8 +107,11 @@ async function callChain(
       }
       return data;
     } catch (err) {
-      const detail = describeError(err);
-      failures.push(`${provider.name}: ${detail.slice(0, 200)}`);
+      // Never let a provider report an empty reason — an unlabelled failure in
+      // the aggregate message is impossible to diagnose from the frontend.
+      const detail =
+        describeError(err).trim() || `${(err as { name?: string })?.name ?? "Error"} with no message`;
+      failures.push(`${provider.name} (${provider.model}): ${detail.slice(0, 200)}`);
       logger.error("AI provider failed", { provider: provider.name, model: provider.model, error: detail });
     }
   }
