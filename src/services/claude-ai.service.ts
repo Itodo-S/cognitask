@@ -20,7 +20,7 @@ import type {
 import type { TodoWithSubtasks } from "../types/todo.js";
 import type { AIService } from "./ai.service.js";
 import { MockAIService } from "./ai.service.js";
-import { anthropic, aiConfigured, structured, message } from "./ai/anthropic.client.js";
+import { aiConfigured, structured, message, modelName, providerName } from "./ai/provider.js";
 import { buildSnapshot, renderSnapshot } from "./ai/context.builder.js";
 import {
   DECOMPOSE_SYSTEM,
@@ -449,10 +449,10 @@ Today: ${new Date().toISOString().slice(0, 10)}${others}`,
 
 export function createAIService(): AIService {
   if (aiConfigured()) {
-    logger.info("Using ClaudeAIService", { model: anthropic.modelName() });
+    logger.info("Using ClaudeAIService", { provider: providerName(), model: modelName() });
     return new ClaudeAIService();
   }
-  logger.info("Using MockAIService (no ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN set)");
+  logger.info("Using MockAIService (no GROQ_API_KEY, GEMINI_API_KEY or ANTHROPIC_AUTH_TOKEN set)");
   return new MockAIService();
 }
 

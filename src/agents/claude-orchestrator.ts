@@ -11,7 +11,7 @@ import type { TodoWithSubtasks, TodoCategory, TodoPriority } from "../types/todo
 import { todoService } from "../services/todo.service.js";
 import { checklistService } from "../services/checklist.service.js";
 import { sessionService } from "../services/session.service.js";
-import { message } from "../services/ai/anthropic.client.js";
+import { message } from "../services/ai/provider.js";
 import { CHAT_SYSTEM } from "../services/ai/prompts.js";
 import { buildSnapshot, renderSnapshot } from "../services/ai/context.builder.js";
 import { wsGateway } from "../ws/gateway.js";

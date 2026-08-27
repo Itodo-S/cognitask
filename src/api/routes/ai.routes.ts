@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { createAIService } from "../../services/claude-ai.service.js";
 import { ClaudeOrchestrator } from "../../agents/claude-orchestrator.js";
-import { aiConfigured, modelName } from "../../services/ai/anthropic.client.js";
+import { aiConfigured, modelName, providerName } from "../../services/ai/provider.js";
 import {
   decomposeSchema,
   categorizeSchema,
@@ -37,6 +37,7 @@ export async function aiRoutes(app: FastifyInstance) {
       success({
         configured: aiConfigured(),
         model: aiConfigured() ? modelName() : null,
+        provider: aiConfigured() ? providerName() : null,
         mode: aiConfigured() ? "claude" : "offline",
       })
     )

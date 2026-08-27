@@ -171,7 +171,9 @@ export interface AiChecklistResponse {
 export interface AiStatus {
   configured: boolean;
   model: string | null;
-  mode: "claude" | "offline";
+  /** Which endpoint is serving the model, e.g. "groq→gemini". */
+  provider?: string | null;
+  mode: string;
 }
 
 export interface AiChatMessage {

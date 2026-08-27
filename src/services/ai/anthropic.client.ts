@@ -1,43 +1,16 @@
 import { env } from "../../config/env.js";
 import { logger } from "../../utils/logger.js";
 import { describeError } from "../../utils/helpers.js";
+import { cleanString, extractJson, postJson } from "./http.js";
+import type { MessageOptions, StructuredOptions } from "./types.js";
 
-export interface JsonSchema {
-  type: "object";
-  properties: Record<string, unknown>;
-  required?: string[];
-  [key: string]: unknown;
-}
-
-export interface MessageOptions {
-  system?: string;
-  maxTokens?: number;
-  temperature?: number;
-  timeoutMs?: number;
-  /** Prior turns, for multi-turn chat. */
-  history?: Array<{ role: "user" | "assistant"; content: string }>;
-}
-
-export interface StructuredOptions<T> extends MessageOptions {
-  /** Name of the synthetic tool the model must call. */
-  toolName: string;
-  toolDescription: string;
-  schema: JsonSchema;
-  /** Last-resort value if the model and every retry fail. */
-  fallback: T;
-}
+export type { JsonSchema, MessageOptions, StructuredOptions } from "./types.js";
 
 const DEFAULT_MODEL = "claude-opus-5";
-const MAX_ATTEMPTS = 3;
-
-function cleanString(val?: string): string {
-  if (!val) return "";
-  return val.trim().replace(/^["']|["']$/g, "");
-}
 
 function apiUrl(): string {
   const rawUrl = cleanString(env.ANTHROPIC_BASE_URL) || "https://api.anthropic.com";
-  let baseUrl = rawUrl.replace(/\/+$/, "");
+  const baseUrl = rawUrl.replace(/\/+$/, "");
   if (baseUrl.endsWith("/v1/messages")) return baseUrl;
   if (baseUrl.endsWith("/v1")) return `${baseUrl}/messages`;
   return `${baseUrl}/v1/messages`;
@@ -65,58 +38,8 @@ export function modelName(): string {
   return cleanString(env.ANTHROPIC_MODEL) || cleanString(env.CLAUDE_MODEL) || DEFAULT_MODEL;
 }
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 async function callApi(body: Record<string, unknown>, timeoutMs: number): Promise<any> {
-  let lastError: unknown;
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    try {
-      const res = await fetch(apiUrl(), {
-        method: "POST",
-        headers: headers(),
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-
-      const contentType = res.headers.get("content-type") ?? "";
-      const raw = await res.text();
-
-      if (res.ok) {
-        // A proxy or WAF in front of the endpoint answers with an HTML page;
-        // report that plainly instead of letting JSON.parse throw.
-        if (!contentType.includes("json")) {
-          throw new Error(
-            `Anthropic endpoint ${new URL(apiUrl()).host} returned ${contentType || "unknown content-type"} ` +
-              `instead of JSON (HTTP ${res.status}). Body starts: ${raw.slice(0, 200).replace(/\s+/g, " ")}`
-          );
-        }
-        try {
-          return JSON.parse(raw);
-        } catch {
-          throw new Error(`Anthropic endpoint returned malformed JSON: ${raw.slice(0, 200)}`);
-        }
-      }
-
-      const detail = raw;
-      // 4xx other than rate limiting will not get better by trying again.
-      if (res.status < 500 && res.status !== 429) {
-        throw new Error(`Anthropic API ${res.status}: ${detail.slice(0, 400)}`);
-      }
-      lastError = new Error(`Anthropic API ${res.status}: ${detail.slice(0, 200)}`);
-    } catch (err) {
-      lastError = err;
-      if (String(err).includes("Anthropic API 4")) throw err;
-    }
-
-    if (attempt < MAX_ATTEMPTS) {
-      const backoff = 500 * 2 ** (attempt - 1);
-      logger.warn("Anthropic call failed, retrying", { attempt, backoff, error: describeError(lastError) });
-      await sleep(backoff);
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+  return postJson({ url: apiUrl(), headers: headers(), body, timeoutMs, label: "Anthropic API" });
 }
 
 /** Plain text completion. */
@@ -137,59 +60,6 @@ export async function message(prompt: string, options: MessageOptions = {}): Pro
     .map((b: any) => b.text)
     .join("\n")
     .trim();
-}
-
-/** Pull the first balanced JSON object/array out of a text blob. */
-function extractJson(text: string): unknown {
-  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  const candidates = [fenced?.[1], text].filter(Boolean) as string[];
-
-  for (const candidate of candidates) {
-    const trimmed = candidate.trim();
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      /* fall through to brace scanning */
-    }
-
-    for (const [open, close] of [
-      ["{", "}"],
-      ["[", "]"],
-    ] as const) {
-      const start = trimmed.indexOf(open);
-      if (start === -1) continue;
-
-      let depth = 0;
-      let inString = false;
-      let escaped = false;
-
-      for (let i = start; i < trimmed.length; i++) {
-        const ch = trimmed[i];
-        if (escaped) {
-          escaped = false;
-          continue;
-        }
-        if (ch === "\\") {
-          escaped = true;
-          continue;
-        }
-        if (ch === '"') inString = !inString;
-        if (inString) continue;
-        if (ch === open) depth++;
-        else if (ch === close) {
-          depth--;
-          if (depth === 0) {
-            try {
-              return JSON.parse(trimmed.slice(start, i + 1));
-            } catch {
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-  return null;
 }
 
 /**

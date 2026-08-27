@@ -1,5 +1,5 @@
 import { TODO_CATEGORIES, TODO_PRIORITIES } from "../../config/constants.js";
-import type { JsonSchema } from "./anthropic.client.js";
+import type { JsonSchema } from "./types.js";
 
 const CATEGORIES = [...TODO_CATEGORIES];
 const PRIORITIES = [...TODO_PRIORITIES];
